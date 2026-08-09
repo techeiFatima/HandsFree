@@ -43,13 +43,41 @@ have unrelated histories, stop and sort that out together rather than forcing it
 
 ### Step 3 — repoint your clone
 
-Once the PR is merged, his repo is the trunk. Make `origin` point at it so the
-daily loop below just works:
+Once the PR is merged, his repo is the trunk, so `origin` should mean his repo
+and the daily loop below just works.
+
+**Rename the remote, don't `reset --hard`.** Renaming keeps your old repo
+reachable as a fallback, and `pull --rebase` replays any local commits you had
+not pushed yet on top of his history. `git reset --hard origin/main` deletes
+them without asking — tested, and it really does lose the work.
 
 ```bash
-git remote set-url origin https://github.com/Nicohlutta/handsfree-hci
-git fetch origin && git checkout main && git reset --hard origin/main
+# 1. look before you leap
+git status                       # commit or stash anything listed
+git log --oneline origin/main..main   # anything here is NOT yet pushed
+
+# 2. origin becomes his; your old repo survives as "myfork"
+git remote rename origin myfork
+git remote add origin https://github.com/Nicohlutta/handsfree-hci
+git fetch origin
+
+# 3. point main at his main and take his work
+git branch -u origin/main main
+git pull --rebase origin main
+
+# 4. confirm
+git remote -v                    # origin -> Nicohlutta/handsfree-hci
+git log --oneline -5             # his commits and yours, one line
 ```
+
+If step 3 stops with `refusing to merge unrelated histories`, the two repos grew
+from different starting points. Do **not** pass `--allow-unrelated-histories` to
+get past it — work out with Nicholas which trunk is real first, because forcing
+it merges two parallel versions of the same project into one tree.
+
+Should anything go wrong, nothing is lost: `git remote -v` still lists `myfork`,
+and `git reflog` still has where you were. To back all the way out,
+`git fetch myfork && git reset --hard myfork/main`.
 
 ## The daily loop
 
