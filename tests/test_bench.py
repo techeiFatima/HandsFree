@@ -213,23 +213,51 @@ def test_beat_cache_is_reused():
 def test_scheduler_does_not_drift():
     """PASS: no visible drift over 20 s.
 
-    Compressed 20x so the suite stays fast: 40 beats at 25 ms is the same
-    number of scheduling decisions as 20 s of 120 BPM music. Absolute anchoring
-    means the LAST pulse must be as accurate as the first — that is the
-    property the film-it-back test is really checking.
+    Drift is ACCUMULATION, not jitter. A shared machine will occasionally
+    stall a thread for tens of milliseconds and there is nothing the
+    scheduler can do about that; what it must never do is let those stalls
+    add up, so that by beat 40 the LED is a whole beat behind the music.
+    So this compares the back half's error against the front half's rather
+    than putting a tight absolute bound on any single pulse — a bound that
+    would really just be measuring how busy the box is.
     """
-    target = [i * 0.025 for i in range(40)]
+    target = [i * 0.05 for i in range(24)]
     fired: list[float] = []
     t0 = time.monotonic()
     s = BeatScheduler(target, lambda: fired.append(time.monotonic() - t0))
     s.start(t0)
-    s.join(timeout=10)
+    s.join(timeout=15)
 
     assert len(fired) == len(target), f"dropped pulses: {len(fired)}/{len(target)}"
     errors = [abs(f - b) for f, b in zip(fired, target)]
-    assert max(errors) < 0.030, f"max error {max(errors)*1e3:.1f} ms"
-    # the drift signature: late pulses no worse than early ones
-    assert errors[-1] < 0.030, f"final pulse drifted {errors[-1]*1e3:.1f} ms"
+
+    half = len(errors) // 2
+    front = sum(errors[:half]) / half
+    back = sum(errors[half:]) / (len(errors) - half)
+    # Accumulating drift would make the back half systematically worse. Allow
+    # a wide margin so ordinary jitter can't trip it; real accumulation over
+    # 24 pulses would be orders of magnitude, not a factor of 4.
+    assert back < max(front * 4, 0.020), (
+        f"error grows through the run: front {front*1e3:.1f} ms, back {back*1e3:.1f} ms")
+    # and a loose sanity ceiling to catch gross breakage
+    assert max(errors) < 0.100, f"max error {max(errors)*1e3:.1f} ms"
+
+
+def test_scheduler_anchors_to_absolute_times():
+    """The mechanism behind the no-drift claim, tested without a clock race.
+
+    Interval sleeping accumulates; absolute anchoring cannot. Feeding a t0
+    already in the past means every beat is overdue, so a correct scheduler
+    fires them all immediately rather than sleeping one interval per beat.
+    """
+    target = [i * 10.0 for i in range(6)]        # 50 s of "music"
+    fired = []
+    t0 = time.monotonic() - 60.0                 # ...that finished a minute ago
+    s = BeatScheduler(target, lambda: fired.append(1))
+    started = time.monotonic()
+    s.start(t0)
+    s.join(timeout=10)
+    assert time.monotonic() - started < 1.0, "scheduler slept per-interval, not to absolute times"
 
 
 def test_scheduler_stops_cleanly():

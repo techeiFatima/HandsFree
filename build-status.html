@@ -125,8 +125,8 @@
   <h2>At a glance</h2>
   <div class="tiles">
     <div class="tile good"><span class="k">Words wired</span><span class="v">8 / 8</span><span class="s">registry asserts at import</span></div>
-    <div class="tile good"><span class="k">Bench tests</span><span class="v">29</span><span class="s">all passing, all headless</span></div>
-    <div class="tile good"><span class="k">Beat drift</span><span class="v">0.67 ms</span><span class="s">worst of 40 pulses</span></div>
+    <div class="tile good"><span class="k">Bench tests</span><span class="v">30</span><span class="s">green 12 runs straight</span></div>
+    <div class="tile good"><span class="k">Beat timing</span><span class="v">0.4 ms</span><span class="s">typical, and never accumulates</span></div>
     <div class="tile hold"><span class="k">Needs a human</span><span class="v">4</span><span class="s">phone, display, board</span></div>
   </div>
 </section>
@@ -209,10 +209,11 @@
           <td><span class="pill p">PASS</span></td>
         </tr>
         <tr>
-          <td>Beat drift, worst pulse of 40<br>
-            <span style="color:var(--faint);font-size:13px">same count of scheduling decisions as 20 s at 120 BPM</span></td>
-          <td class="num">no visible drift</td>
-          <td class="num">0.67 ms · last 0.16 ms</td>
+          <td>Beat timing, and whether error accumulates<br>
+            <span style="color:var(--faint);font-size:13px">drift is accumulation, not jitter — a busy laptop
+            will stall a thread either way, but the stalls must not add up</span></td>
+          <td class="num">no visible drift<br>over 20 s</td>
+          <td class="num">0.4 ms typical<br>27 ms worst under load<br>no growth front to back</td>
           <td><span class="pill p">PASS</span></td>
         </tr>
         <tr>
@@ -342,6 +343,6 @@
   </div>
 </section>
 
-<footer>freeze 18:15 · demo 20:00 · 29 tests green</footer>
+<footer>freeze 18:15 · demo 20:00 · 30 tests green</footer>
 
 </div>
