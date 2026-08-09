@@ -161,6 +161,34 @@ def test_mute_still_sends_os_key_when_zoom_shortcut_fails(monkeypatch):
     assert ("volumemute",) in sent
 
 
+# ── F3 · privacy blank ──────────────────────────────────────────────────────
+
+def test_privacy_binds_escape():
+    """PASS: Esc dismisses. Non-negotiable — a topmost black window with no
+    keyboard escape locks the laptop in front of the room."""
+    src = (REPO / "handsfree" / "actions" / "privacy.py").read_text()
+    assert "<Escape>" in src, "Esc is not bound on the blank"
+
+
+def test_nothing_grabs_the_keyboard():
+    """The kill switch must stay reachable underneath the blank.
+
+    Tk's grab_set() routes all input to one window, which would swallow
+    Ctrl+Alt+Q and leave a black screen nobody can dismiss — the exact
+    lock-out the plan calls out.
+    """
+    for path in (REPO / "handsfree").rglob("*.py"):
+        src = path.read_text()
+        assert "grab_set" not in src, f"{path.name} grabs the keyboard"
+        assert "grab_global" not in src, f"{path.name} grabs the keyboard"
+
+
+def test_privacy_actions_are_safe_headless():
+    """Firing them on a box with no display must not raise."""
+    fire("privacy_blank")
+    fire("privacy_restore")
+
+
 # ── F5 · beats ──────────────────────────────────────────────────────────────
 
 def test_extracted_tempo_matches_the_song():
