@@ -67,6 +67,11 @@ sundai/sources.py                 sim | serial | replay | audio
 sundai/models.py                  passthrough | threshold | clap | chronos
 sundai/pipeline.py                the spine: window, rule, recorder, sinks
 sundai/server.py + ui.html        live dashboard
+handsfree/safety.py               kill switch (Ctrl+Alt+Q) + dead-man switch
+handsfree/actions/                word → action registry (python -m handsfree --fire <word>)
+handsfree/beats.py                pre-analysed beat times → screen dot + Arduino LED
+handsfree/breakwatch.py           stillness tracker + break prompt
+media/beat_track.wav              demo song (regenerate: python -m handsfree.make_demo_track)
 firmware/arduino_stream/*.ino     Uno Rev3 / Nano 33 IoT / Uno Q sensor streamer
 firmware/circuitpython/code.py    PyKit Ruler streamer
 logs/                             every run auto-recorded as .jsonl
