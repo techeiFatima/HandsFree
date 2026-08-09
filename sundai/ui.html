@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{TITLE}}</title>
+<style>
+  :root{
+    --bg:#0a0d12; --panel:#131820; --line:#232c3a; --ink:#e9eef7;
+    --dim:#7d8ba3; --accent:#5ce1a6; --hot:#ff5f56; --warm:#ffbd2e;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);
+       font:16px/1.4 ui-sans-serif,system-ui,"Segoe UI",sans-serif;
+       padding:24px;min-height:100vh}
+  header{display:flex;align-items:baseline;gap:16px;margin-bottom:20px}
+  h1{font-size:22px;font-weight:650;letter-spacing:-.01em}
+  .pill{font-size:13px;color:var(--dim);border:1px solid var(--line);
+        border-radius:999px;padding:3px 12px;font-variant-numeric:tabular-nums}
+  .grid{display:grid;grid-template-columns:1.35fr 1fr;gap:20px}
+  @media(max-width:1000px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);
+        border-radius:14px;padding:22px}
+  .card h2{font-size:12px;font-weight:600;letter-spacing:.09em;
+           text-transform:uppercase;color:var(--dim);margin-bottom:16px}
+
+  /* the money shot: giant current prediction */
+  #label{font-size:clamp(34px,5.4vw,68px);font-weight:700;letter-spacing:-.02em;
+         line-height:1.05;word-break:break-word}
+  #detail{color:var(--dim);margin-top:10px;font-size:16px;min-height:22px}
+  #score{font-size:15px;color:var(--accent);font-variant-numeric:tabular-nums;
+         margin-top:14px}
+
+  .bars{display:flex;flex-direction:column;gap:11px}
+  .bar-row{display:grid;grid-template-columns:1fr 58px;gap:12px;align-items:center}
+  .bar-label{font-size:15px;white-space:nowrap;overflow:hidden;
+             text-overflow:ellipsis}
+  .bar-track{grid-column:1/-1;height:9px;background:#1d2531;border-radius:5px;
+             overflow:hidden;margin-top:-4px}
+  .bar-fill{height:100%;background:var(--accent);border-radius:5px;
+            transition:width .18s ease-out}
+  .bar-val{text-align:right;font-variant-numeric:tabular-nums;color:var(--dim);
+           font-size:14px}
+
+  .chans{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+         gap:14px}
+  .chan{background:#0f141c;border:1px solid var(--line);border-radius:10px;
+        padding:13px 15px}
+  .chan .k{font-size:11px;letter-spacing:.07em;text-transform:uppercase;
+           color:var(--dim)}
+  .chan .v{font-size:26px;font-weight:620;font-variant-numeric:tabular-nums;
+           margin-top:3px}
+  canvas{width:100%;height:150px;display:block;margin-top:8px}
+
+  #flash{position:fixed;left:50%;top:26px;transform:translateX(-50%) translateY(-160%);
+         background:var(--hot);color:#fff;font-size:24px;font-weight:700;
+         padding:16px 40px;border-radius:12px;transition:transform .22s
+         cubic-bezier(.2,1.4,.4,1);box-shadow:0 12px 40px rgba(255,95,86,.35);
+         z-index:50}
+  #flash.on{transform:translateX(-50%) translateY(0)}
+
+  footer{margin-top:20px;display:flex;gap:22px;flex-wrap:wrap;color:var(--dim);
+         font-size:13px;font-variant-numeric:tabular-nums}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;
+       background:var(--hot);margin-right:7px;vertical-align:middle}
+  .dot.live{background:var(--accent);box-shadow:0 0 10px var(--accent)}
+</style>
+</head>
+<body>
+<div id="flash"></div>
+
+<header>
+  <h1>{{TITLE}}</h1>
+  <span class="pill"><span class="dot" id="dot"></span><span id="conn">connecting</span></span>
+  <span class="pill" id="model">model —</span>
+  <span class="pill" id="replay" style="display:none;color:var(--warm);border-color:var(--warm)">REPLAY</span>
+</header>
+
+<div class="grid">
+  <div>
+    <div class="card">
+      <h2>Prediction</h2>
+      <div id="label">waiting for data…</div>
+      <div id="detail"></div>
+      <div id="score"></div>
+    </div>
+    <div class="card" style="margin-top:20px">
+      <h2>Signal</h2>
+      <canvas id="plot"></canvas>
+      <div class="chans" id="chans" style="margin-top:14px"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Class scores</h2>
+    <div class="bars" id="bars"><div style="color:var(--dim)">—</div></div>
+  </div>
+</div>
+
+<footer>
+  <span id="n">0 records</span>
+  <span id="lat">— ms</span>
+  <span id="fires">0 actions</span>
+  <span id="rate">— Hz</span>
+</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const hist = {};           // channel -> array of numbers
+const MAXPTS = 320;
+let plotKey = null, lastN = 0, lastT = Date.now();
+
+function connect(){
+  const ws = new WebSocket(`ws://${location.host}/ws`);
+  ws.onopen = () => { $('conn').textContent='live'; $('dot').classList.add('live'); };
+  ws.onclose = () => {
+    $('conn').textContent='reconnecting'; $('dot').classList.remove('live');
+    setTimeout(connect, 1000);
+  };
+  ws.onmessage = e => render(JSON.parse(e.data));
+}
+
+function render(r){
+  const p = r.pred || {};
+  $('label').textContent = p.label ?? '—';
+  $('detail').textContent = p.detail ?? '';
+  $('score').textContent = p.score != null ? `confidence ${(p.score*100).toFixed(1)}%` : '';
+  $('model').textContent = 'model ' + (p.model || window.__model || '—');
+  if (r._replay) $('replay').style.display='';
+
+  // class score bars (CLAP and friends)
+  if (Array.isArray(p.all)) {
+    $('bars').innerHTML = p.all.map(x => `
+      <div>
+        <div class="bar-row">
+          <span class="bar-label">${esc(x.label)}</span>
+          <span class="bar-val">${(x.score*100).toFixed(1)}%</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:${(x.score*100).toFixed(1)}%"></div></div>
+      </div>`).join('');
+  }
+
+  // numeric channels
+  const nums = {};
+  for (const [k,v] of Object.entries(r)) {
+    if (k==='t'||k==='n'||k==='latency_ms'||k==='pred'||k==='action'||k.startsWith('_')) continue;
+    if (typeof v === 'number') nums[k]=v;
+  }
+  $('chans').innerHTML = Object.entries(nums).map(([k,v]) =>
+    `<div class="chan"><div class="k">${esc(k)}</div><div class="v">${fmt(v)}</div></div>`).join('');
+
+  for (const [k,v] of Object.entries(nums)) {
+    (hist[k] ||= []).push(v);
+    if (hist[k].length > MAXPTS) hist[k].shift();
+  }
+  if (!plotKey || !(plotKey in nums)) plotKey = Object.keys(nums)[0] || null;
+  drawPlot(p);
+
+  if (r.action) flash(r.action);
+
+  $('n').textContent = `${r.n ?? 0} records`;
+  $('lat').textContent = `${r.latency_ms ?? '—'} ms`;
+  const now = Date.now();
+  if (now - lastT > 1000) {
+    $('rate').textContent = (((r.n||0)-lastN)/((now-lastT)/1000)).toFixed(1)+' Hz';
+    lastN = r.n||0; lastT = now;
+  }
+}
+
+function drawPlot(pred){
+  const c = $('plot'), ctx = c.getContext('2d');
+  const dpr = devicePixelRatio||1;
+  c.width = c.clientWidth*dpr; c.height = c.clientHeight*dpr;
+  ctx.scale(dpr,dpr);
+  const W=c.clientWidth, H=c.clientHeight;
+  ctx.clearRect(0,0,W,H);
+  if (!plotKey) return;
+
+  const data = hist[plotKey]||[];
+  const fc = Array.isArray(pred.forecast) && pred.channel===plotKey ? pred.forecast : [];
+  const all = data.concat(fc, Array.isArray(pred.lo)&&pred.channel===plotKey?pred.lo:[],
+                          Array.isArray(pred.hi)&&pred.channel===plotKey?pred.hi:[]);
+  if (all.length < 2) return;
+  let lo=Math.min(...all), hi=Math.max(...all);
+  if (hi-lo < 1e-9) { hi+=1; lo-=1; }
+  const pad=(hi-lo)*0.12; lo-=pad; hi+=pad;
+  const total = data.length + fc.length;
+  const X = i => (i/(total-1))*W;
+  const Y = v => H - ((v-lo)/(hi-lo))*H;
+
+  ctx.strokeStyle='#5ce1a6'; ctx.lineWidth=2; ctx.beginPath();
+  data.forEach((v,i)=> i?ctx.lineTo(X(i),Y(v)):ctx.moveTo(X(i),Y(v)));
+  ctx.stroke();
+
+  if (fc.length) {                       // forecast tail, dashed
+    ctx.strokeStyle='#ffbd2e'; ctx.setLineDash([5,4]); ctx.beginPath();
+    ctx.moveTo(X(data.length-1), Y(data[data.length-1]));
+    fc.forEach((v,i)=> ctx.lineTo(X(data.length+i), Y(v)));
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  ctx.fillStyle='#7d8ba3'; ctx.font='12px ui-sans-serif,system-ui';
+  ctx.fillText(`${plotKey}  ${fmt(lo)} – ${fmt(hi)}`, 6, 14);
+}
+
+let flashTimer;
+function flash(msg){
+  const f=$('flash'); f.textContent='⚡ '+msg; f.classList.add('on');
+  clearTimeout(flashTimer);
+  flashTimer=setTimeout(()=>f.classList.remove('on'), 2600);
+}
+
+const fmt = v => Math.abs(v)>=1000 ? v.toFixed(0)
+                : Math.abs(v)>=10 ? v.toFixed(1) : v.toFixed(3);
+const esc = s => String(s).replace(/[&<>"]/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+$('plot').addEventListener('click', () => {          // cycle plotted channel
+  const keys=Object.keys(hist); if(!keys.length) return;
+  plotKey = keys[(keys.indexOf(plotKey)+1)%keys.length];
+});
+
+fetch('/status').then(r=>r.json()).then(s=>{
+  window.__model = s.model; $('model').textContent='model '+s.model;
+}).catch(()=>{});
+
+connect();
+setInterval(()=>{ if(plotKey) drawPlot(({})); }, 400);
+</script>
+</body>
+</html>
