@@ -161,6 +161,195 @@ def test_mute_still_sends_os_key_when_zoom_shortcut_fails(monkeypatch):
     assert ("volumemute",) in sent
 
 
+# ── cross-platform ──────────────────────────────────────────────────────────
+
+def test_kill_switch_keycodes_differ_per_platform():
+    """The bug this guards: Q's key code is not portable.
+
+    safety.py once hardcoded 81 (Windows VK_Q). On macOS 'q' arrives as 12 and
+    on X11 as 113, so the hotkey silently never fired — a kill switch you would
+    trust and that was not there. Worse than having none.
+    """
+    from handsfree.safety import q_vks
+    assert q_vks("win32") == {81}
+    assert q_vks("darwin") == {12}
+    assert q_vks("linux") == {113}
+    assert q_vks("win32") != q_vks("darwin"), "the whole point of the table"
+    # an unrecognised platform must accept everything, never nothing
+    assert q_vks("sunos5") >= {81, 12, 113}
+
+
+class _FakeKey:
+    """Stand-in for a pynput Key member (modifiers) or KeyCode (letters)."""
+    def __init__(self, name=None, vk=None, char=None):
+        self.name, self.vk, self.char = name, vk, char
+    def __repr__(self):
+        return f"<{self.name or self.char or self.vk}>"
+
+
+def _fake_pynput(monkeypatch):
+    """Install a fake pynput and return a dict that captures the listener."""
+    import types
+    captured = {}
+
+    class Key:
+        ctrl = _FakeKey("ctrl")
+        ctrl_l = _FakeKey("ctrl_l")
+        ctrl_r = _FakeKey("ctrl_r")
+        alt = _FakeKey("alt")
+        alt_l = _FakeKey("alt_l")
+        alt_r = _FakeKey("alt_r")
+
+    class Listener:
+        def __init__(self, on_press=None, on_release=None):
+            captured["press"] = on_press
+            captured["release"] = on_release
+            self.daemon = False
+        def start(self):
+            captured["started"] = True
+
+    kb = types.ModuleType("pynput.keyboard")
+    kb.Key, kb.Listener = Key, Listener
+    pynput = types.ModuleType("pynput")
+    pynput.keyboard = kb
+    monkeypatch.setitem(sys.modules, "pynput", pynput)
+    monkeypatch.setitem(sys.modules, "pynput.keyboard", kb)
+    captured["Key"] = Key
+    return captured
+
+
+@pytest.mark.parametrize("platform,q_vk", [
+    ("darwin", 12), ("win32", 81), ("linux", 113),
+])
+def test_kill_switch_actually_fires_on_each_platform(monkeypatch, platform, q_vk):
+    """Drive the real listener callbacks with that platform's key codes.
+
+    This is the closest thing to running it on a Mac that a Linux box can do,
+    and it is the check that would have caught the original bug: with the old
+    hardcoded VK_Q = 81, the darwin case here never fires.
+    """
+    import handsfree.safety as safety
+
+    monkeypatch.setattr(sys, "platform", platform)
+    monkeypatch.setattr(safety, "_armed_once", False)
+    killed = []
+    monkeypatch.setattr(safety, "_panic", lambda reason="": killed.append(reason))
+    cap = _fake_pynput(monkeypatch)
+
+    safety.arm()
+    press, release = cap["press"], cap["release"]
+    Key = cap["Key"]
+
+    # q alone: nothing
+    press(_FakeKey(vk=q_vk))
+    assert not killed, "fired without modifiers"
+
+    # ctrl+q: still nothing
+    press(Key.ctrl_l)
+    press(_FakeKey(vk=q_vk))
+    assert not killed, "fired without alt"
+
+    # ctrl+alt+q: fires
+    press(Key.alt_l)
+    press(_FakeKey(vk=q_vk))
+    assert killed, f"kill switch did not fire on {platform} (q vk={q_vk})"
+
+    # releasing a modifier disarms it again
+    killed.clear()
+    release(Key.alt_l)
+    press(_FakeKey(vk=q_vk))
+    assert not killed, "fired after alt was released"
+
+
+def test_kill_switch_falls_back_to_the_character(monkeypatch):
+    """Belt and braces for a platform whose code isn't in the table."""
+    import handsfree.safety as safety
+    monkeypatch.setattr(sys, "platform", "sunos5")
+    monkeypatch.setattr(safety, "_armed_once", False)
+    killed = []
+    monkeypatch.setattr(safety, "_panic", lambda reason="": killed.append(reason))
+    cap = _fake_pynput(monkeypatch)
+    safety.arm()
+    Key = cap["Key"]
+    cap["press"](Key.ctrl_l)
+    cap["press"](Key.alt_l)
+    cap["press"](_FakeKey(vk=9999, char="q"))
+    assert killed, "char fallback did not fire"
+
+
+def test_no_bare_windows_keycodes_left_in_the_hotkey_path():
+    src = (REPO / "handsfree" / "safety.py").read_text()
+    assert "VK_CTRL" not in src and "VK_ALT" not in src, (
+        "Windows-only modifier tables are back; modifiers must match pynput Key members")
+
+
+@pytest.mark.parametrize("platform,expected", [
+    ("darwin", ("command", "shift", "a")),
+    ("win32", ("alt", "a")),
+    ("linux", ("alt", "a")),
+])
+def test_zoom_chord_per_platform(platform, expected):
+    """Zoom's global mute is Cmd+Shift+A on macOS, Alt+A elsewhere.
+    Sending the wrong one is silent."""
+    from handsfree.actions.keys import zoom_chord
+    assert zoom_chord(platform) == expected
+
+
+def test_mac_uses_system_media_events_not_key_names(monkeypatch):
+    """On macOS 'playpause' is not in pyautogui's key table and _keyDown
+    returns silently for unknown keys — so the naive path reports success and
+    does nothing. Both actions must take the NSSystemDefined route instead."""
+    import handsfree.actions.keys as keys
+    monkeypatch.setattr(sys, "platform", "darwin")
+    pressed, media = [], []
+    monkeypatch.setattr(keys, "_press", lambda *k: pressed.append(k))
+    monkeypatch.setattr(keys, "_mac_media", lambda n: media.append(n))
+
+    keys.mute_toggle()
+    keys.media_playpause()
+
+    assert media == [keys.MAC_MUTE, keys.MAC_PLAYPAUSE], (
+        f"macOS did not use system media events: {media}")
+    assert ("volumemute",) not in pressed, "sent the unreliable macOS key name"
+    assert ("playpause",) not in pressed, "sent a key macOS ignores entirely"
+    assert ("command", "shift", "a") in pressed, "wrong Zoom chord on macOS"
+
+
+def test_non_mac_still_uses_key_names(monkeypatch):
+    """Don't break Windows while fixing the Mac."""
+    import handsfree.actions.keys as keys
+    monkeypatch.setattr(sys, "platform", "win32")
+    pressed, media = [], []
+    monkeypatch.setattr(keys, "_press", lambda *k: pressed.append(k))
+    monkeypatch.setattr(keys, "_mac_media", lambda n: media.append(n))
+
+    keys.mute_toggle()
+    keys.media_playpause()
+
+    assert not media, "used the macOS path on Windows"
+    assert ("volumemute",) in pressed and ("playpause",) in pressed
+    assert ("alt", "a") in pressed
+
+
+def test_mac_media_names_exist_in_pyautogui(monkeypatch):
+    """MAC_MUTE / MAC_PLAYPAUSE must be real entries in pyautogui's macOS
+    special-key table, or _mac_media raises KeyError on the demo machine."""
+    import handsfree.actions.keys as keys
+    try:
+        from pyautogui import _pyautogui_osx as osx
+        table = osx.special_key_translate_table
+    except Exception:
+        table = {"KEYTYPE_MUTE": 7, "KEYTYPE_PLAY": 16}   # verified upstream
+    assert keys.MAC_MUTE in table
+    assert keys.MAC_PLAYPAUSE in table
+
+
+def test_board_autodetect_is_safe_with_no_ports(monkeypatch):
+    """No board attached must return None, not raise or pick something random."""
+    from handsfree import beats
+    assert beats.find_board() is None or isinstance(beats.find_board(), str)
+
+
 # ── F3 · privacy blank ──────────────────────────────────────────────────────
 
 def test_privacy_binds_escape():

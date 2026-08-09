@@ -54,9 +54,15 @@ def _build(root) -> None:
         for x, y, w, h in boxes:
             win = tk.Toplevel(root)
             win.configure(background="black")
-            win.overrideredirect(True)  # no title bar on the secondary screens
+            win.overrideredirect(True)  # no title bar, and covers the menu bar
             win.geometry(f"{w}x{h}+{x}+{y}")
-            if len(boxes) == 1:
+            # -fullscreen on macOS means NATIVE fullscreen: a half-second zoom
+            # animation, and the window lands in its own Space. Both are wrong
+            # here -- the blank has to be instant and has to cover what is
+            # already on screen. Sized geometry with no decorations does that
+            # on every platform; elsewhere -fullscreen is still the tidier way
+            # to guarantee full coverage on the one-monitor case.
+            if len(boxes) == 1 and sys.platform != "darwin":
                 win.attributes("-fullscreen", True)
             win.attributes("-topmost", True)
             win.config(cursor="none")

@@ -21,7 +21,7 @@ words while the music plays.
 
     python -m handsfree.actions --fire led_beat_start
     python -m handsfree.actions --fire led_beat_stop
-    python -m handsfree.beats media/beat_track.wav --port COM4
+    python -m handsfree.beats media/beat_track.wav        # finds the board itself
 """
 from __future__ import annotations
 
@@ -109,6 +109,24 @@ class BeatScheduler:
 
 # ── sinks ────────────────────────────────────────────────────────────────────
 
+def find_board() -> str | None:
+    """First serial port that looks like a real board, or None.
+
+    Saves knowing what the port is called on the machine you happen to be on:
+    COM4 on Windows, /dev/cu.usbmodem1401 on macOS, /dev/ttyACM0 on Linux.
+    Only considers ports reporting a USB vendor ID, so it cannot latch onto a
+    Bluetooth or debug console and start writing LED_ON at it.
+    """
+    try:
+        from serial.tools import list_ports
+    except Exception:
+        return None
+    for p in list_ports.comports():
+        if getattr(p, "vid", None) is not None:
+            return p.device
+    return None
+
+
 def _serial_sink(port: str, baud: int = 115200):
     """LED_ON now, LED_OFF a pulse later. The firmware already speaks both."""
     import serial
@@ -188,7 +206,7 @@ def led_beat_start(song: Path | str = SONG, port: str | None = None) -> None:
         beats = extract_beats(Path(song))
         sinks = []
 
-        port = port or os.environ.get("HANDSFREE_LED_PORT")
+        port = port or os.environ.get("HANDSFREE_LED_PORT") or find_board()
         if port:
             try:
                 sink = _serial_sink(port)
@@ -199,6 +217,8 @@ def led_beat_start(song: Path | str = SONG, port: str | None = None) -> None:
                 # Board missing is the EXPECTED case, not an error. Degrade.
                 print(f"[beats] no board on {port} ({exc!r}) — screen dot only",
                       file=sys.stderr)
+        else:
+            print("[beats] no board found — screen dot only", file=sys.stderr)
 
         _dot = _DotWindow()
         if _dot.open():
@@ -242,7 +262,7 @@ def main(argv: list[str] | None = None) -> None:
     import argparse
     ap = argparse.ArgumentParser(description="Pulse an LED and a screen dot on the beat.")
     ap.add_argument("song", nargs="?", default=str(SONG))
-    ap.add_argument("--port", help="Arduino serial port, e.g. COM4")
+    ap.add_argument("--port", help="serial port; omit to auto-detect the board")
     ap.add_argument("--reextract", action="store_true", help="ignore the cached beat times")
     ap.add_argument("--seconds", type=float, default=None, help="stop after N seconds")
     args = ap.parse_args(argv)

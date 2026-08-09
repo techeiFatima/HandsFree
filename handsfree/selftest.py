@@ -100,7 +100,7 @@ STEPS = [
          "the dot pulses in time; the LED too if the board is plugged in",
          "still on the beat after 20 s, no drift",
          _beats_check,
-         setup="Set HANDSFREE_LED_PORT=COM4 first if the Arduino is connected. "
+         setup="The board is found automatically; set HANDSFREE_LED_PORT to override. "
                "Film this one on your phone and watch it back."),
 
     Step("break", "Break reminder",

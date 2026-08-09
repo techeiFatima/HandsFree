@@ -90,14 +90,14 @@ python -m handsfree.actions --list                 # every word
 python -m handsfree.actions --fire test_ping       # prove the seam
 python -m handsfree.actions --fire mute_toggle --repeat 5 --interval 1
 python -m handsfree.actions --fire privacy_blank --hold 10   # Esc dismisses
-python -m handsfree.beats --port COM4 --seconds 20            # LED on the beat
+python -m handsfree.beats --seconds 20                        # LED on the beat
 ```
 
 The eight contracted words, fixed and never renamed:
 
 | Word | Does |
 |---|---|
-| `mute_toggle` | OS volume mute + Alt+A so Zoom's mic mutes too |
+| `mute_toggle` | system mute + Zoom's own chord (Alt+A; Cmd+Shift+A on macOS) |
 | `media_playpause` | media play/pause key |
 | `privacy_blank` / `privacy_restore` | black fullscreen cover on every monitor; **Esc dismisses** |
 | `playlist_open` | plays `media/beat_track.wav` |
@@ -123,13 +123,41 @@ real cursor, mutes Zoom while Zoom is minimised, and covers the actual screen.
 A browser tab is sandboxed out of all three (that's the whole reason the control
 loop is Python and not the browser — see `PLAN.md` §1). You test it by running it:
 
+Runs on **Windows and macOS** (and Linux, for the non-GUI parts).
+
 ```bash
 git clone https://github.com/Nicohlutta/handsfree-hci && cd handsfree-hci
 uv venv --python 3.11 .venv
-uv pip install --python .venv/Scripts/python.exe -r requirements.txt
-
-.venv/Scripts/python -m handsfree.selftest      # guided walk through every action
 ```
+
+```bash
+# Windows
+uv pip install --python .venv/Scripts/python.exe -r requirements.txt
+.venv/Scripts/python -m handsfree.selftest
+
+# macOS / Linux
+uv pip install --python .venv/bin/python -r requirements.txt
+.venv/bin/python -m handsfree.selftest
+```
+
+`python -m handsfree.selftest` walks every action in order: it says what should
+happen, fires it, and asks whether it did.
+
+#### macOS: grant permissions first, or everything fails silently
+
+macOS gates synthetic input behind two separate switches, and **neither library
+raises when the grant is missing** — pynput simply never sees a key and
+pyautogui never moves the mouse. That failure looks exactly like a bug in this
+code, so do this before anything else. In **System Settings → Privacy &
+Security**, add your terminal (Terminal, iTerm, or your editor) to:
+
+- **Accessibility** — lets pyautogui move the cursor and send keys
+- **Input Monitoring** — lets pynput see `Ctrl+Alt+Q`
+
+You must fully quit and reopen the terminal afterwards; the grant is read at
+launch. Zoom's own mute shortcut on macOS is **Cmd+Shift+A**, not Alt+A — the
+code sends the right one per platform, but check it's enabled as a *global*
+shortcut in Zoom either way.
 
 The self-test prints what should happen, fires the action, and asks whether it
 did — then summarises against the bench criteria. `--auto` fires everything
