@@ -138,15 +138,13 @@ loop is Python and not the browser — see `PLAN.md` §1). You test it by runnin
 
 Runs on **Windows and macOS** (and Linux, for the non-GUI parts).
 
-> **Where the code is.** The plan docs point at `Nicohlutta/handsfree-hci`, but
-> this checkout's origin is `techeiFatima/HandsFree`, and Track B currently
-> lives on the branch `claude/website-overview-wad0j1`, not on `main`. Clone
-> *this* repo and check that branch out, or you will get a tree with no
-> `handsfree/actions/` in it.
+> **Where the code is.** The shared repo is `Nicohlutta/handsfree-hci`, but as of
+> now the newest Track B code is on `main` in `techeiFatima/HandsFree` and has
+> not been moved across yet — see [COLLABORATING.md](COLLABORATING.md) for the
+> three steps that fix that. Until it's done, clone the one below.
 
 ```bash
 git clone https://github.com/techeiFatima/HandsFree && cd HandsFree
-git checkout claude/website-overview-wad0j1
 uv venv --python 3.11 .venv
 ```
 

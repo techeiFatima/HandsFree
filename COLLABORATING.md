@@ -6,17 +6,50 @@ nowhere else.
 
 ## The one-time setup
 
-The plan docs point at `Nicohlutta/handsfree-hci`, but this checkout's origin is
-`techeiFatima/HandsFree`. **Pick one repo and both work in it.** Two repos that
-each hold half the project is the failure this file exists to prevent.
+**The shared repo is `Nicohlutta/handsfree-hci`.** That is the decision — it is
+also what every plan doc already says. `techeiFatima/HandsFree` is where Track B
+was built and currently holds the newer code; it becomes a working copy once the
+move below is done.
 
-Whoever owns the chosen repo adds the other as a collaborator:
+### Step 1 — Nicholas invites Fatima
 
-> Repo → **Settings** → **Collaborators and teams** → **Add people** →
-> invite them → they accept from their GitHub notifications or email.
+> `Nicohlutta/handsfree-hci` → **Settings** → **Collaborators and teams** →
+> **Add people** → invite `techeiFatima` → she accepts from her GitHub
+> notifications or email.
 
-Until that invite is accepted, the other person can read but **cannot push**, and
-your work does not reach them no matter how often you commit.
+Until that invite is accepted, Fatima can read but **cannot push**, and no amount
+of committing gets her work to him. This is the actual blocker; nothing else in
+this file works without it.
+
+### Step 2 — Fatima pushes Track B over to his repo
+
+From a clone of `techeiFatima/HandsFree`, with `main` up to date:
+
+```bash
+git remote add upstream https://github.com/Nicohlutta/handsfree-hci
+git fetch upstream
+git checkout -b track-b main
+git push upstream track-b
+```
+
+Then open a pull request on his repo from `track-b`, so he can look over the
+`safety.py` change before it lands on his trunk.
+
+Push a **branch**, not straight to his `main`. If his repo grew from a separate
+starting point, its history and this one may not share an ancestor, and pushing
+`main` directly would either be rejected or clobber his work. A branch plus a PR
+shows you which it is before anything is at risk. If GitHub says the branches
+have unrelated histories, stop and sort that out together rather than forcing it.
+
+### Step 3 — repoint your clone
+
+Once the PR is merged, his repo is the trunk. Make `origin` point at it so the
+daily loop below just works:
+
+```bash
+git remote set-url origin https://github.com/Nicohlutta/handsfree-hci
+git fetch origin && git checkout main && git reset --hard origin/main
+```
 
 ## The daily loop
 
