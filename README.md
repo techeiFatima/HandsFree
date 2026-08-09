@@ -116,6 +116,30 @@ capture anywhere, because that path is fiddly on Windows and can fail on stage.
 Missing hardware degrades instead of failing — no Arduino falls back to the
 screen dot, no display falls back to console pulses.
 
+### Testing it for real
+
+There is no website to try this on, and there can't be — the product moves the
+real cursor, mutes Zoom while Zoom is minimised, and covers the actual screen.
+A browser tab is sandboxed out of all three (that's the whole reason the control
+loop is Python and not the browser — see `PLAN.md` §1). You test it by running it:
+
+```bash
+git clone https://github.com/Nicohlutta/handsfree-hci && cd handsfree-hci
+uv venv --python 3.11 .venv
+uv pip install --python .venv/Scripts/python.exe -r requirements.txt
+
+.venv/Scripts/python -m handsfree.selftest      # guided walk through every action
+```
+
+The self-test prints what should happen, fires the action, and asks whether it
+did — then summarises against the bench criteria. `--auto` fires everything
+without asking; `--only mute privacy` runs just those.
+
+**Learn `Ctrl+Alt+Q` before the first run.** It kills the process from anywhere,
+and it is how you get out of a black screen or a runaway cursor. To prove it
+works, start `python -m handsfree.runaway` — which hijacks your mouse on
+purpose — and take the machine back.
+
 ### Bench tests
 
 `bench-plan.html` says a feature without a passing bench test is not built.
