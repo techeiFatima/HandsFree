@@ -21,6 +21,34 @@ Until that invite is accepted, Fatima can read but **cannot push**, and no amoun
 of committing gets her work to him. This is the actual blocker; nothing else in
 this file works without it.
 
+### Step 0 — check you are in the right repository
+
+Git commands run against whatever repo contains your current directory, and it
+will happily let you add a remote, branch, and push from the wrong one. If your
+home folder is itself a git repo — which is easy to do by accident and easy not
+to notice — then every `git` command you type in a fresh terminal runs against
+*that*, not against this project.
+
+```bash
+git rev-parse --show-toplevel
+git remote -v
+```
+
+The first should print the path of your HandsFree clone, **not** your home
+directory. The second should mention `HandsFree`. If either looks wrong, `cd`
+into the clone first; if you have not cloned it yet:
+
+```bash
+mkdir -p ~/projects
+cd ~/projects
+git clone https://github.com/techeiFatima/HandsFree.git
+cd HandsFree
+```
+
+If your home directory really is a git repo for something else, it is worth
+untangling separately — `git add -A` run there would stage your entire home
+folder, keys and all.
+
 ### Step 2 — Fatima pushes Track B over to his repo
 
 From a clone of `techeiFatima/HandsFree`, with `main` up to date:
