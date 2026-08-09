@@ -1,0 +1,311 @@
+<title>Fatima — action steps</title>
+<style>
+  :root{
+    --ground:#FAF8F7; --panel:#FFFFFF; --sunk:#F2EDEA; --line:#E4DCD6;
+    --ink:#1A1512; --dim:#6E625B; --faint:#9B8D85;
+    --f:#A8501C; --f-soft:#F8EAE0;
+    --n:#0E6F78; --n-soft:#E4F1F2;
+    --p1:#A8321F; --p2:#A8501C; --p3:#6E625B;
+    --ok:#3E6E4B;
+    --sans:ui-sans-serif,"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
+    --mono:ui-monospace,"Cascadia Mono","Consolas",monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ground:#12100E; --panel:#1C1815; --sunk:#241F1B; --line:#332C27;
+      --ink:#EFE8E3; --dim:#A2948B; --faint:#776A63;
+      --f:#E4914F; --f-soft:#31210F;
+      --n:#4CBEC6; --n-soft:#0D2A2E;
+      --p1:#E2705A; --p2:#E4914F; --p3:#A2948B;
+      --ok:#6FB77F;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#12100E; --panel:#1C1815; --sunk:#241F1B; --line:#332C27;
+    --ink:#EFE8E3; --dim:#A2948B; --faint:#776A63;
+    --f:#E4914F; --f-soft:#31210F;
+    --n:#4CBEC6; --n-soft:#0D2A2E;
+    --p1:#E2705A; --p2:#E4914F; --p3:#A2948B;
+    --ok:#6FB77F;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--sans); font-size:16.5px; line-height:1.5;
+    padding:48px 22px 76px}
+  .wrap{max-width:720px; margin:0 auto; display:flex; flex-direction:column; gap:38px}
+
+  h1{font-size:clamp(28px,4.6vw,40px); line-height:1.06; letter-spacing:-.028em;
+    font-weight:700; margin:0; text-wrap:balance}
+  header p{color:var(--dim); margin:14px 0 0; max-width:56ch}
+  .job{background:var(--f-soft); border:1px solid var(--f); border-radius:12px;
+    padding:18px 22px; margin-top:22px; font-size:15.5px}
+  .job b{color:var(--ink)}
+
+  h2{font-family:var(--mono); font-size:11px; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--faint); font-weight:500;
+    margin:0 0 16px; padding-bottom:10px; border-bottom:1px solid var(--line)}
+  h3{font-size:16px; font-weight:660; margin:0 0 10px; letter-spacing:-.008em}
+  code{font-family:var(--mono); font-size:13px; background:var(--sunk);
+    padding:1.5px 5px; border-radius:4px; border:1px solid var(--line)}
+
+  .group{display:flex; flex-direction:column; gap:9px; margin-bottom:26px}
+  .group:last-child{margin-bottom:0}
+  .group-head{display:flex; align-items:baseline; gap:10px; padding-bottom:3px}
+  .group-head .gt{font-size:16.5px; font-weight:680; letter-spacing:-.012em}
+  .group-head .gm{margin-left:auto; font-family:var(--mono); font-size:12px;
+    color:var(--faint); font-variant-numeric:tabular-nums}
+  .group-head .gd{font-family:var(--mono); font-size:11px; color:var(--f);
+    letter-spacing:.08em}
+
+  .step{background:var(--panel); border:1px solid var(--line);
+    border-left:3px solid var(--f); border-radius:8px;
+    padding:13px 16px; display:grid; grid-template-columns:34px 1fr;
+    gap:13px; align-items:start}
+  .pri{font-family:var(--mono); font-size:10px; font-weight:700;
+    padding:3px 0; border-radius:4px; text-align:center;
+    border:1px solid currentColor; margin-top:2px}
+  .pri.a{color:var(--p1)} .pri.b{color:var(--p2)} .pri.c{color:var(--p3)}
+  .verb{font-size:15.5px; font-weight:600; letter-spacing:-.006em}
+  .verb em{font-style:normal; color:var(--f)}
+  .note{font-size:14px; color:var(--dim); margin-top:4px}
+  .note b{color:var(--ink); font-weight:600}
+  .check{font-size:13.5px; color:var(--ok); margin-top:5px; font-weight:600}
+
+  /* Nicholas's parallel track */
+  .his{display:flex; flex-direction:column; gap:8px}
+  .hrow{background:var(--panel); border:1px solid var(--line);
+    border-left:3px solid var(--n); border-radius:8px; padding:12px 16px;
+    display:flex; align-items:baseline; gap:11px; flex-wrap:wrap}
+  .hrow .hid{font-family:var(--mono); font-size:11px; font-weight:600;
+    color:var(--n); letter-spacing:.06em}
+  .hrow .hname{font-size:15px; font-weight:600; letter-spacing:-.005em}
+  .hrow .hmin{margin-left:auto; font-family:var(--mono); font-size:11.5px;
+    color:var(--faint); font-variant-numeric:tabular-nums}
+  .hrow .hyou{flex-basis:100%; font-size:13.5px; color:var(--n);
+    background:var(--n-soft); border-radius:6px; padding:7px 10px; margin-top:2px}
+  .hrow .hyou b{color:var(--ink)}
+  .hnote{background:var(--n-soft); border:1px solid var(--n);
+    border-radius:12px; padding:18px 22px; font-size:15px; margin-bottom:16px}
+  .hnote b{color:var(--ink)}
+
+  .box{background:var(--panel); border:1px solid var(--line);
+    border-radius:12px; padding:20px 22px}
+  .box.await{border-left:3px solid var(--p1)}
+  .box ul{margin:0; padding-left:18px; display:flex; flex-direction:column;
+    gap:8px; font-size:14.5px; color:var(--dim)}
+  .box ul b{color:var(--ink); font-weight:600}
+  .stack{display:flex; flex-direction:column; gap:16px}
+
+  .sync{background:var(--panel); border:1px solid var(--line);
+    border-radius:12px; overflow:hidden}
+  .sync .r{display:grid; grid-template-columns:74px 1fr; gap:16px;
+    padding:14px 20px; border-bottom:1px solid var(--line); font-size:15px}
+  .sync .r:last-child{border-bottom:0}
+  .sync .r.stop{background:var(--sunk); font-weight:600}
+  .sync .t{font-family:var(--mono); font-variant-numeric:tabular-nums;
+    color:var(--dim); font-size:14px}
+  footer{color:var(--faint); font-size:13px; font-family:var(--mono);
+    text-align:center}
+</style>
+
+<div class="wrap">
+
+<header>
+  <h1>Fatima — your action steps</h1>
+  <p>Every step below starts with a verb, is short enough to finish in one sitting,
+  and is yours. <b>P1</b> blocks other work — do those first. Anything that isn't
+  actionable yet is parked at the bottom so it stops taking up room in your head.</p>
+
+  <div class="job">
+    <b>Your job in one sentence:</b> Nicholas's code turns the camera into a word.
+    Your code turns that word into something happening on the laptop. You never need
+    his camera working to build or test yours — you fire the words yourself from the
+    terminal.
+  </div>
+</header>
+
+<section>
+  <h2>Start here</h2>
+  <div class="group">
+    <div class="group-head"><span class="gt">Get unblocked</span><span class="gd">DO NOW</span><span class="gm">10 min</span></div>
+    <div class="step"><span class="pri a">P1</span><div>
+      <div class="verb"><em>Accept</em> the GitHub invite</div>
+      <div class="note">It's in your GitHub notifications and your email. You cannot push a single line until this is done.</div></div></div>
+    <div class="step"><span class="pri a">P1</span><div>
+      <div class="verb"><em>Clone</em> <code>github.com/Nicohlutta/handsfree-hci</code> and install it</div>
+      <div class="note"><code>uv venv --python 3.11 .venv</code> then <code>uv pip install --python .venv/Scripts/python.exe -r requirements.txt</code></div></div></div>
+    <div class="step"><span class="pri a">P1</span><div>
+      <div class="verb"><em>Enable</em> Zoom's global mute shortcut</div>
+      <div class="note">Zoom → Settings → Keyboard Shortcuts → Mute/Unmute My Audio → tick <b>Enable Global Shortcut</b>. Two minutes now; without it your biggest feature looks broken at 18:00.</div></div></div>
+  </div>
+</section>
+
+<section>
+  <h2>Build, in this order</h2>
+
+  <div class="group">
+    <div class="group-head"><span class="gt">1 · The action registry</span><span class="gm">20 min</span></div>
+    <div class="step"><span class="pri a">P1</span><div>
+      <div class="verb"><em>Create</em> <code>handsfree/actions/__init__.py</code> holding an <code>ACTIONS</code> dictionary</div>
+      <div class="note">It maps a word to a function. The seven words, fixed and never renamed: <code>mute_toggle</code> <code>media_playpause</code> <code>privacy_blank</code> <code>privacy_restore</code> <code>playlist_open</code> <code>led_beat_start</code> <code>break_prompt</code></div></div></div>
+    <div class="step"><span class="pri a">P1</span><div>
+      <div class="verb"><em>Add</em> a <code>--fire &lt;word&gt;</code> command line</div>
+      <div class="note">This is the whole reason you can work in parallel. Build it before any feature.</div>
+      <div class="check">Check: <code>--fire test_ping</code> prints something.</div></div></div>
+  </div>
+
+  <div class="group">
+    <div class="group-head"><span class="gt">2 · Mute and pause</span><span class="gm">30 min</span></div>
+    <div class="step"><span class="pri b">P2</span><div>
+      <div class="verb"><em>Write</em> <code>mute_toggle</code> using the Windows volume-mute key</div></div></div>
+    <div class="step"><span class="pri b">P2</span><div>
+      <div class="verb"><em>Write</em> <code>media_playpause</code> using the media play/pause key</div></div></div>
+    <div class="step"><span class="pri b">P2</span><div>
+      <div class="verb"><em>Send</em> Alt+A as well, so it mutes Zoom itself</div></div></div>
+    <div class="step"><span class="pri b">P2</span><div>
+      <div class="verb"><em>Verify</em> from a test meeting joined on your phone</div>
+      <div class="note">Minimise Zoom first — that's the case that matters. Fire it five times each way and watch the phone.</div>
+      <div class="check">Check: mutes in under half a second, with Zoom not focused.</div></div></div>
+  </div>
+
+  <div class="group">
+    <div class="group-head"><span class="gt">3 · Privacy blank</span><span class="gm">25 min</span></div>
+    <div class="step"><span class="pri b">P2</span><div>
+      <div class="verb"><em>Build</em> a fullscreen, always-on-top black window</div>
+      <div class="note">A Tk <code>Toplevel</code> with <code>-fullscreen</code> and <code>-topmost</code> is enough.</div></div></div>
+    <div class="step"><span class="pri a">P1</span><div>
+      <div class="verb"><em>Bind</em> the Esc key to close it</div>
+      <div class="note">Not optional. A black always-on-top window with no keyboard escape locks the laptop in front of the whole room.</div></div></div>
+    <div class="step"><span class="pri b">P2</span><div>
+      <div class="verb"><em>Confirm</em> Ctrl+Alt+Q still works while the screen is black</div></div></div>
+    <div class="step"><span class="pri c">P3</span><div>
+      <div class="verb"><em>Decide</em> what a second monitor does</div>
+      <div class="note">Cover all screens or just the main one — either is fine, just don't find out on stage.</div>
+      <div class="check">Check: covers in under a second, Esc brings it back.</div></div></div>
+  </div>
+
+  <div class="group">
+    <div class="group-head"><span class="gt">4 · Playlist</span><span class="gm">15 min</span></div>
+    <div class="step"><span class="pri b">P2</span><div>
+      <div class="verb"><em>Choose</em> the song now and drop it in the repo folder</div>
+      <div class="note">Pick one with an obvious beat — it makes the LED read from across the room.</div></div></div>
+    <div class="step"><span class="pri b">P2</span><div>
+      <div class="verb"><em>Write</em> <code>playlist_open</code> to launch that file</div>
+      <div class="check">Check: firing the word starts music.</div></div></div>
+  </div>
+
+  <div class="group">
+    <div class="group-head"><span class="gt">5 · LED on the beat</span><span class="gm">40 min</span></div>
+    <div class="step"><span class="pri b">P2</span><div>
+      <div class="verb"><em>Extract</em> the beat times from the song ahead of time</div>
+      <div class="note">librosa's <code>beat_track</code> gives you the BPM and a list of timestamps. <b>Do not try to capture live audio</b> — that path eats an hour on Windows and can fail live.</div></div></div>
+    <div class="step"><span class="pri b">P2</span><div>
+      <div class="verb"><em>Write</em> a scheduler that fires a pulse at each beat time</div></div></div>
+    <div class="step"><span class="pri b">P2</span><div>
+      <div class="verb"><em>Build</em> an on-screen pulsing dot off the same beat times</div>
+      <div class="note">Build this <b>before</b> touching the Arduino. If no board turns up, the demo still works.</div></div></div>
+    <div class="step"><span class="pri c">P3</span><div>
+      <div class="verb"><em>Send</em> the pulses to the Arduino over serial</div>
+      <div class="note">The firmware already understands <code>LED_ON</code> and <code>LED_OFF</code> — see <code>firmware/arduino_stream/</code>.</div></div></div>
+    <div class="step"><span class="pri c">P3</span><div>
+      <div class="verb"><em>Film</em> 20 seconds on your phone and watch it back</div>
+      <div class="check">Check: still on the beat after 20 seconds, no drift.</div></div></div>
+  </div>
+
+  <div class="group">
+    <div class="group-head"><span class="gt">6 · Break reminder</span><span class="gd">CUT THIS FIRST</span><span class="gm">25 min</span></div>
+    <div class="step"><span class="pri c">P3</span><div>
+      <div class="verb"><em>Track</em> how much the shoulders and hips move over time</div></div></div>
+    <div class="step"><span class="pri c">P3</span><div>
+      <div class="verb"><em>Set</em> the stillness window to 30 seconds, not 20 minutes</div>
+      <div class="note">You have to be able to demo it in front of people.</div></div></div>
+    <div class="step"><span class="pri c">P3</span><div>
+      <div class="verb"><em>Check</em> that standing up resets it within 3 seconds</div></div></div>
+  </div>
+</section>
+
+<section>
+  <h2>What Nicholas is building at the same time</h2>
+  <div class="hnote">
+    He works on the <b>camera side</b>: turning what the webcam sees into one of your
+    seven words. You work on the <b>machine side</b>: turning a word into something
+    happening. You two only touch at the word — so nothing on this list can block you.
+    <b>Don't edit his files</b> (<code>sources.py</code>, <code>gestures.py</code>,
+    <code>cursor.py</code>) and he won't edit yours (<code>actions/</code>,
+    <code>beats.py</code>).
+  </div>
+  <div class="his">
+    <div class="hrow">
+      <span class="hid">N1</span><span class="hname">Build the kill switch</span><span class="hmin">20m</span>
+      <span class="hyou"><b>Matters to you:</b> Ctrl+Alt+Q kills everything instantly. Once the app starts moving the mouse, that hotkey is how either of you takes back control. Learn it now.</span>
+    </div>
+    <div class="hrow">
+      <span class="hid">N2</span><span class="hname">Stream the webcam and hand landmarks</span><span class="hmin">20m</span>
+    </div>
+    <div class="hrow">
+      <span class="hid">N3</span><span class="hname">Recognise four gestures</span><span class="hmin">45m</span>
+      <span class="hyou"><b>Matters to you:</b> when this lands, your words start arriving for real instead of from <code>--fire</code>. That's the 16:30 join.</span>
+    </div>
+    <div class="hrow">
+      <span class="hid">N4</span><span class="hname">Drive the cursor, pinch to click</span><span class="hmin">60m</span>
+      <span class="hyou"><b>Matters to you:</b> while he's testing this the mouse will move on its own. If your screen goes weird around 16:30–17:45, it's probably him, not you.</span>
+    </div>
+    <div class="hrow">
+      <span class="hid">N5</span><span class="hname">Add scroll</span><span class="hmin">15m</span>
+    </div>
+    <div class="hrow">
+      <span class="hid">N6</span><span class="hname">Type a new gesture — stretch goal</span><span class="hmin">30m</span>
+      <span class="hyou"><b>Matters to you:</b> if he gets here, a judge can invent a gesture live and it fires one of <em>your</em> actions. That's the moment the pitch is built around.</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Parked on purpose</h2>
+  <div class="stack">
+    <div class="box await">
+      <h3>Waiting on someone else — don't chase these</h3>
+      <ul>
+        <li><b>Nicholas</b> — the seven words are final at 15:45. Build against the list above; if he changes one, he tells you.</li>
+        <li><b>Nicholas</b> — first real gesture-fires-your-action test at 16:30. Until then, <code>--fire</code> is your camera.</li>
+        <li><b>Anyone</b> — confirm an Arduino and an LED are actually on the table. If not, step 5 becomes just the screen dot and you get 25 minutes back.</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>Things you'll need to look up</h3>
+      <ul>
+        <li>Repo — <b>github.com/Nicohlutta/handsfree-hci</b></li>
+        <li>Zoom global shortcut — Settings → Keyboard Shortcuts → Mute/Unmute</li>
+        <li>Arduino already accepts — <code>LED_ON</code> <code>LED_OFF</code> <code>BUZZ</code> <code>ALERT</code></li>
+        <li>Full test protocol with pass numbers — <code>bench-plan.html</code> in the repo</li>
+        <li>Git — no branches, commit to <code>master</code> every 20 minutes and push</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>Good ideas, not today</h3>
+      <ul>
+        <li>Voice agent triggered by a sign</li>
+        <li>Live audio beat detection instead of pre-analysed times</li>
+        <li>Blur the screen instead of blanking it</li>
+        <li>Different gesture meanings per app — Zoom vs browser</li>
+        <li>LED colour following the music's energy, not just the beat</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>When to stop and talk</h2>
+  <div class="sync">
+    <div class="r"><span class="t">15:45</span><span>Two minutes, standing. Freeze the seven words — then <b>each of you says your next three steps out loud</b>, so nothing gets built twice.</span></div>
+    <div class="r"><span class="t">16:30</span><span>First joining. His gestures fire your actions. Expect it to break — that's why it isn't at 18:00.</span></div>
+    <div class="r"><span class="t">17:45</span><span>Full integration, camera-versus-Zoom test, retune under the venue lighting.</span></div>
+    <div class="r stop"><span class="t">18:15</span><span>CODE FREEZE. Record the fallback video. Nobody commits after this.</span></div>
+    <div class="r"><span class="t">19:00</span><span>Rehearse three times. Submit the card.</span></div>
+  </div>
+</section>
+
+<footer>handsfree-hci · freeze 18:15 · demo 20:00</footer>
+
+</div>

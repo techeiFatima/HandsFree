@@ -1,0 +1,480 @@
+<title>Hands-free HCI — Build & Bench Plan</title>
+<style>
+  :root{
+    --ground:#F6F8F9; --panel:#FFFFFF; --sunk:#EDF2F4; --line:#D6E0E4;
+    --ink:#0F191E; --dim:#5B6D77; --faint:#8496A0;
+    --a:#0E6F78; --a-soft:#DCEEF0;
+    --b:#A8501C; --b-soft:#F6E7DC;
+    --pass:#2C6E49; --risk:#A83A32;
+    --mono:ui-monospace,"Cascadia Mono","Consolas","SF Mono",monospace;
+    --sans:ui-sans-serif,"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ground:#0A1013; --panel:#131C21; --sunk:#18242A; --line:#25353C;
+      --ink:#E1EBEF; --dim:#8296A0; --faint:#61757F;
+      --a:#43BAC2; --a-soft:#0E2C30;
+      --b:#E08C51; --b-soft:#33210F;
+      --pass:#5CBB82; --risk:#E26C61;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0A1013; --panel:#131C21; --sunk:#18242A; --line:#25353C;
+    --ink:#E1EBEF; --dim:#8296A0; --faint:#61757F;
+    --a:#43BAC2; --a-soft:#0E2C30;
+    --b:#E08C51; --b-soft:#33210F;
+    --pass:#5CBB82; --risk:#E26C61;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--ground); color:var(--ink); font-family:var(--sans);
+    font-size:16px; line-height:1.55; margin:0;
+    padding:40px 24px 80px;
+  }
+  .wrap{max-width:1080px; margin:0 auto; display:flex; flex-direction:column; gap:34px}
+
+  .eyebrow{
+    font-family:var(--mono); font-size:11px; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--faint);
+  }
+  h1{
+    font-size:clamp(28px,4vw,42px); line-height:1.08; letter-spacing:-.025em;
+    font-weight:700; margin:6px 0 0; text-wrap:balance;
+  }
+  h2{
+    font-size:19px; letter-spacing:-.01em; font-weight:680; margin:0;
+    text-wrap:balance;
+  }
+  h3{font-size:15px; font-weight:660; margin:0; letter-spacing:-.005em}
+  p{margin:0}
+  a{color:var(--a)}
+
+  header .lede{color:var(--dim); margin-top:12px; max-width:62ch}
+
+  .clock{
+    display:flex; gap:0; flex-wrap:wrap; margin-top:22px;
+    border:1px solid var(--line); border-radius:10px; overflow:hidden;
+    background:var(--panel);
+  }
+  .clock div{
+    padding:12px 20px; border-right:1px solid var(--line); flex:1 1 auto;
+  }
+  .clock div:last-child{border-right:0}
+  .clock .k{font-family:var(--mono); font-size:10px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--faint)}
+  .clock .v{font-family:var(--mono); font-size:22px; font-weight:600;
+    font-variant-numeric:tabular-nums; margin-top:3px}
+
+  section{display:flex; flex-direction:column; gap:16px}
+  .sec-head{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;
+    border-bottom:1px solid var(--line); padding-bottom:10px}
+  .sec-head p{color:var(--dim); font-size:14px}
+
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:22px 24px; display:flex; flex-direction:column; gap:14px;
+  }
+  .card.contract{border-color:var(--a); background:var(--a-soft)}
+
+  .owner{
+    display:inline-flex; align-items:center; gap:7px; font-family:var(--mono);
+    font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+    padding:4px 10px; border-radius:999px; white-space:nowrap;
+  }
+  .owner.a{background:var(--a-soft); color:var(--a); border:1px solid var(--a)}
+  .owner.b{background:var(--b-soft); color:var(--b); border:1px solid var(--b)}
+  .owner .sq{width:7px; height:7px; border-radius:2px; background:currentColor}
+
+  .card-top{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+  .card-top .dur{margin-left:auto; font-family:var(--mono); font-size:12px;
+    color:var(--dim); font-variant-numeric:tabular-nums}
+
+  .block{display:flex; flex-direction:column; gap:7px}
+  .block .lbl{font-family:var(--mono); font-size:10px; letter-spacing:.15em;
+    text-transform:uppercase; color:var(--faint)}
+  .block p, .block li{font-size:14.5px}
+  ol,ul{margin:0; padding-left:20px; display:flex; flex-direction:column; gap:5px}
+  ol{font-variant-numeric:tabular-nums}
+  code{font-family:var(--mono); font-size:13px; background:var(--sunk);
+    padding:1.5px 5px; border-radius:4px; border:1px solid var(--line)}
+
+  .pass{
+    border-left:3px solid var(--pass); background:var(--sunk);
+    padding:10px 14px; border-radius:0 7px 7px 0;
+    font-family:var(--mono); font-size:13px; line-height:1.5;
+  }
+  .pass b{color:var(--pass); font-weight:600}
+  .warn{
+    border-left:3px solid var(--risk); background:var(--sunk);
+    padding:10px 14px; border-radius:0 7px 7px 0; font-size:14px;
+  }
+  .warn b{color:var(--risk)}
+
+  .tbl-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:10px;
+    background:var(--panel)}
+  table{border-collapse:collapse; width:100%; min-width:620px; font-size:14px}
+  th,td{text-align:left; padding:11px 16px; border-bottom:1px solid var(--line);
+    vertical-align:top}
+  thead th{font-family:var(--mono); font-size:10px; letter-spacing:.13em;
+    text-transform:uppercase; color:var(--faint); font-weight:500;
+    background:var(--sunk)}
+  tbody tr:last-child td{border-bottom:0}
+  td.t{font-family:var(--mono); font-variant-numeric:tabular-nums;
+    white-space:nowrap; color:var(--dim)}
+  td.ta{border-left:2px solid var(--a)}
+  td.tb{border-left:2px solid var(--b)}
+  tr.freeze td{background:var(--sunk); font-weight:600}
+
+  .split{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+  @media(max-width:760px){.split{grid-template-columns:1fr}}
+
+  .steps{counter-reset:s; list-style:none; padding:0; gap:9px}
+  .steps li{counter-increment:s; padding-left:30px; position:relative}
+  .steps li::before{
+    content:counter(s); position:absolute; left:0; top:1px;
+    font-family:var(--mono); font-size:11px; color:var(--a);
+    border:1px solid var(--a); border-radius:4px;
+    width:20px; height:20px; display:grid; place-items:center;
+  }
+  .card.tb .steps li::before{color:var(--b); border-color:var(--b)}
+
+  footer{color:var(--faint); font-size:13px; border-top:1px solid var(--line);
+    padding-top:18px; font-family:var(--mono)}
+  :focus-visible{outline:2px solid var(--a); outline-offset:2px}
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Sundai · 9 Aug 2026 · demo 20:00</div>
+  <h1>Hands-free HCI — build &amp; bench plan</h1>
+  <p class="lede">Five features, two people, one webcam. Every feature below has a
+  test you can actually run and a number it has to beat. Voice agent is deferred
+  until the cursor works.</p>
+
+  <div class="clock">
+    <div><div class="k">Plan written</div><div class="v">15:15</div></div>
+    <div><div class="k">Code freeze</div><div class="v">18:15</div></div>
+    <div><div class="k">Demo</div><div class="v">20:00</div></div>
+    <div><div class="k">Build time left</div><div class="v">3h 00m</div></div>
+  </div>
+</header>
+
+<section>
+  <div class="sec-head">
+    <h2>The contract that lets two people work at once</h2>
+    <p>Agree this before anyone writes code.</p>
+  </div>
+
+  <div class="card contract">
+    <p>Split the system at the <b>action name</b>. Track A turns camera pixels into
+    a string. Track B turns that string into something happening on the machine.
+    Neither needs the other to be finished.</p>
+    <div class="block">
+      <div class="lbl">Shared vocabulary — fix these strings now, never rename them</div>
+      <p><code>mute_toggle</code> <code>media_playpause</code>
+      <code>privacy_blank</code> <code>privacy_restore</code>
+      <code>playlist_open</code> <code>led_beat_start</code>
+      <code>led_beat_stop</code> <code>break_prompt</code></p>
+    </div>
+    <div class="block">
+      <div class="lbl">How B works without a camera</div>
+      <p><code>python -m handsfree.actions --fire mute_toggle</code> — fires any action
+      straight from the terminal. B builds and tests every action this way while A is
+      still fighting the gesture recogniser.</p>
+    </div>
+    <div class="block">
+      <div class="lbl">File ownership — no branches, you don't have time to merge</div>
+      <p><b>A owns</b> <code>sources.py</code>, <code>gestures.py</code>,
+      <code>cursor.py</code>. <b>B owns</b> <code>actions/</code>,
+      <code>beats.py</code>. Commit to master every 20 minutes. If you need a file
+      the other owns, ask — don't edit.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <h2>Schedule</h2>
+    <p>Two tracks in parallel. The 18:15 row is not negotiable.</p>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th>Time</th><th>Track A — Nicholas · perception</th><th>Track B — colleague · actuation</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="t">15:15–15:45</td><td class="ta">Kill switch + rails. Webcam source into the spine.</td><td class="tb">Action registry + CLI trigger. Mute / play-pause.</td></tr>
+        <tr><td class="t">15:45–16:30</td><td class="ta">Gesture layer — canned classes + finger-to-lips geometry.</td><td class="tb">Privacy blank overlay. Playlist launcher.</td></tr>
+        <tr><td class="t">16:30–17:45</td><td class="ta">Cursor, pinch click, scroll. The headline feature.</td><td class="tb">LED beat sync. Break reminder.</td></tr>
+        <tr><td class="t">17:45–18:15</td><td class="ta" colspan="2">Both: integration, webcam-vs-Zoom test, threshold tuning under venue lighting.</td></tr>
+        <tr class="freeze"><td class="t">18:15–19:00</td><td colspan="2">CODE FREEZE. Record the fallback video. Capture a replay log. Nobody commits after this.</td></tr>
+        <tr><td class="t">19:00–19:30</td><td colspan="2">Zoom rehearsal ×3. Submit the card at sundai.club/pitch.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="warn"><b>Cut lines.</b> Behind at 16:30 → drop the LED, use an on-screen
+  pulse instead. Behind at 17:00 → drop the break reminder. Behind at 17:45 → demo
+  three features and say so confidently. Never cut the 18:15 block; that block is the
+  reason you have a demo at all.</div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <h2>Bench cards</h2>
+    <p>Build it, then run the test, then check the number. A feature without a passing bench test is not built.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-top">
+      <span class="owner a"><span class="sq"></span>Track A</span>
+      <h3>Kill switch &amp; safety rails</h3>
+      <span class="dur">20 min · do this first</span>
+    </div>
+    <div class="block">
+      <div class="lbl">Build</div>
+      <p><code>pynput</code> global hotkey <code>Ctrl+Alt+Q</code> →
+      <code>os._exit(0)</code>. <code>pyautogui.FAILSAFE = True</code>. Cursor control
+      armed only while a pose is held — drop your hand and control stops.</p>
+    </div>
+    <div class="block">
+      <div class="lbl">Test</div>
+      <ol class="steps">
+        <li>Run a script that walks the cursor in a 200 px circle forever.</li>
+        <li>While it is moving, press <code>Ctrl+Alt+Q</code>.</li>
+        <li>Repeat 3×, including once while a modal dialog holds focus.</li>
+        <li>Separately, slam the cursor into a screen corner — failsafe must abort.</li>
+      </ol>
+    </div>
+    <div class="pass"><b>PASS</b> — cursor stops and process exits ≤ 200 ms, 3 of 3,
+    including with focus stolen.</div>
+    <div class="warn"><b>Stop everything if this fails.</b> Once the app owns the
+    mouse and a gesture misfires, you cannot click "stop" — you have given away the
+    only input device you had.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-top">
+      <span class="owner a"><span class="sq"></span>Track A</span>
+      <h3>Gesture recognition</h3>
+      <span class="dur">45 min</span>
+    </div>
+    <div class="block">
+      <div class="lbl">Build</div>
+      <p>MediaPipe <code>GestureRecognizer</code> gives Thumb_Up, Open_Palm, Victory,
+      Closed_Fist free — no training. Finger-to-lips needs geometry: index tip
+      (landmark 8) within a radius of the mouth landmark from the face mesh.</p>
+    </div>
+    <div class="block">
+      <div class="lbl">Test</div>
+      <ol class="steps">
+        <li>Hold each gesture 10× at 0.5 m, then 1.0 m, then 1.5 m from the camera.</li>
+        <li>Log every detection with its confidence and timestamp.</li>
+        <li>Then sit for 60 s talking and moving your hands naturally, making
+        <em>no</em> intentional gestures. Count what fires.</li>
+      </ol>
+    </div>
+    <div class="pass"><b>PASS</b> — ≥ 8/10 detected within 1 s at all three distances,
+    and <b>≤ 1 false positive in 60 s</b> of normal talking.</div>
+    <p style="font-size:14px;color:var(--dim)">The false-positive number is the one
+    that decides whether the demo survives. Most teams never measure it, then their
+    screen blanks mid-sentence on stage.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-top">
+      <span class="owner a"><span class="sq"></span>Track A</span>
+      <h3>Cursor, pinch click, scroll</h3>
+      <span class="dur">75 min · the headline claim</span>
+    </div>
+    <div class="block">
+      <div class="lbl">Build</div>
+      <p>Index tip → active region <code>0.25–0.75</code> of the frame mapped to the
+      full screen. One Euro filter, not plain LERP. Click when
+      <code>dist(4,8) / dist(0,9) &lt; 0.35</code> — a <em>ratio</em>, so it survives
+      you leaning toward the camera. Scroll on two-finger vertical drag.</p>
+    </div>
+    <div class="block">
+      <div class="lbl">Test</div>
+      <ol class="steps">
+        <li><b>Jitter</b> — hold your hand still for 10 s, log cursor position.</li>
+        <li><b>Targeting</b> — five 60 px buttons at the four corners and centre.
+        Time each acquisition.</li>
+        <li><b>Click</b> — pinch on a 60 px target 10×.</li>
+        <li><b>Depth</b> — repeat the click test leaning in, then leaning back.</li>
+        <li><b>Scroll</b> — a long page, three screens down and back.</li>
+      </ol>
+    </div>
+    <div class="pass"><b>PASS</b> — jitter std-dev &lt; 5 px · 5/5 targets acquired
+    ≤ 5 s each with no oscillation · ≥ 8/10 clicks land, no double-fire ·
+    <b>same hit rate leaning in and out</b> · scroll stops when the hand stops.</div>
+    <p style="font-size:14px;color:var(--dim)">Step 4 is the bug in Ankit's version —
+    his fixed <code>0.045</code> threshold makes pinching easier as you lean in. If
+    your ratio version passes and his doesn't, that is a slide-free thing to show.</p>
+  </div>
+
+  <div class="card tb">
+    <div class="card-top">
+      <span class="owner b"><span class="sq"></span>Track B</span>
+      <h3>Mute &amp; pause — the desk-visitor moment</h3>
+      <span class="dur">40 min</span>
+    </div>
+    <div class="warn"><b>Prerequisite that will bite you.</b> Zoom only responds to
+    <code>Alt+A</code> from another window if you tick <em>Enable Global Shortcut</em>
+    under Settings → Keyboard Shortcuts → Mute/Unmute My Audio. Do this now, not at
+    19:00.</div>
+    <div class="block">
+      <div class="lbl">Build</div>
+      <p>System mute via <code>VK_VOLUME_MUTE</code>, media via
+      <code>VK_MEDIA_PLAY_PAUSE</code>, Zoom via global <code>Alt+A</code>.</p>
+    </div>
+    <div class="block">
+      <div class="lbl">Test</div>
+      <ol class="steps">
+        <li>Play music. <code>--fire media_playpause</code>. Sound stops.</li>
+        <li>Time gesture → silence.</li>
+        <li>Join a test meeting from your phone. Fire <code>mute_toggle</code> with
+        Zoom <em>not</em> focused. Watch the mute indicator on the phone.</li>
+        <li>Fire again — audio returns.</li>
+      </ol>
+    </div>
+    <div class="pass"><b>PASS</b> — latency &lt; 500 ms · 5/5 in both directions ·
+    works while Zoom is unfocused.</div>
+  </div>
+
+  <div class="card tb">
+    <div class="card-top">
+      <span class="owner b"><span class="sq"></span>Track B</span>
+      <h3>Stealth privacy blank</h3>
+      <span class="dur">25 min · cheapest win here</span>
+    </div>
+    <div class="block">
+      <div class="lbl">Build</div>
+      <p>A Tk <code>Toplevel</code>, <code>-fullscreen</code>, <code>-topmost</code>,
+      black fill. Bind <code>Esc</code> to dismiss.</p>
+    </div>
+    <div class="block">
+      <div class="lbl">Test</div>
+      <ol class="steps">
+        <li><code>--fire privacy_blank</code> — screen covers in under a second.</li>
+        <li><b>Press Esc.</b> It must dismiss from the keyboard.</li>
+        <li>With an external display attached, check what happens. Decide now:
+        cover every monitor, or only the primary.</li>
+        <li>While blanked, confirm <code>Ctrl+Alt+Q</code> still works.</li>
+      </ol>
+    </div>
+    <div class="pass"><b>PASS</b> — appears ≤ 1 s · Esc dismisses · kill switch still
+    reachable underneath.</div>
+    <div class="warn">Step 2 is not optional. A topmost black window with no keyboard
+    escape locks you out of your own laptop in front of the room.</div>
+  </div>
+
+  <div class="card tb">
+    <div class="card-top">
+      <span class="owner b"><span class="sq"></span>Track B</span>
+      <h3>Thumbs-up → playlist + LED on the beat</h3>
+      <span class="dur">50 min · needs the Arduino</span>
+    </div>
+    <div class="block">
+      <div class="lbl">Build</div>
+      <p>Playlist via <code>os.startfile()</code> on a local file or a Spotify URI.
+      For the LED: beat-track the song <em>offline</em> with librosa
+      <code>beat_track</code>, then replay timed pulses over serial.</p>
+    </div>
+    <div class="warn"><b>Do not attempt realtime loopback audio.</b> WASAPI loopback
+    capture on Windows is fiddly and you have three hours. Offline beat times are
+    deterministic, which also means they can't fail on stage.</div>
+    <div class="block">
+      <div class="lbl">Test</div>
+      <ol class="steps">
+        <li><code>--fire playlist_open</code> — player opens and plays.</li>
+        <li>Print detected BPM. Tap along to sanity-check it.</li>
+        <li>Film 20 s of the LED on a phone with the music playing. Watch it back.</li>
+        <li>Unplug the board. Confirm the on-screen pulse fallback still runs.</li>
+      </ol>
+    </div>
+    <div class="pass"><b>PASS</b> — no visible drift over 20 s · degrades to the
+    screen pulse when no board is connected.</div>
+  </div>
+
+  <div class="card tb">
+    <div class="card-top">
+      <span class="owner b"><span class="sq"></span>Track B</span>
+      <h3>Movement → break reminder</h3>
+      <span class="dur">25 min · build last, cut without regret</span>
+    </div>
+    <div class="block">
+      <div class="lbl">Build</div>
+      <p>MediaPipe Pose. Track the shoulder–hip midpoint, accumulate movement energy
+      over a rolling window, prompt when it stays under threshold.</p>
+    </div>
+    <div class="block">
+      <div class="lbl">Test</div>
+      <ol class="steps">
+        <li>Set the window to <b>30 s</b> for the demo. The real value is 20 minutes
+        and you cannot demo 20 minutes.</li>
+        <li>Sit still 30 s — prompt fires.</li>
+        <li>Stand and stretch — timer resets.</li>
+      </ol>
+    </div>
+    <div class="pass"><b>PASS</b> — fires at 30 s of stillness · resets within 3 s of
+    real movement.</div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <h2>Integration test — 17:45, both of you</h2>
+    <p>This is the one that decides whether you have a demo.</p>
+  </div>
+  <div class="split">
+    <div class="card">
+      <h3>Webcam contention with Zoom</h3>
+      <ol class="steps">
+        <li>Open Zoom. Turn your video on.</li>
+        <li>Start the app. Does it bind the camera?</li>
+        <li>If not: turn Zoom video off, retry.</li>
+        <li>Still failing: route through OBS virtual camera, or pitch from a second
+        device with the laptop as the demo machine.</li>
+      </ol>
+      <div class="warn">Zoom wants the camera for your pitch. So does your app. This
+      is the failure that leaves you with nothing at 20:00, and it takes two minutes
+      to rule out.</div>
+    </div>
+    <div class="card">
+      <h3>What the room actually sees</h3>
+      <ol class="steps">
+        <li>Share your screen on Zoom. Join the same meeting from your phone.</li>
+        <li>Look at the phone. Is the HUD text legible at that size?</li>
+        <li>Check the venue lighting — MediaPipe degrades badly in backlight. Retune
+        thresholds where you'll actually stand.</li>
+        <li>Run the full 90-second sequence three times consecutively.</li>
+      </ol>
+      <div class="pass"><b>DONE</b> means three clean consecutive runs. Not one lucky
+      one.</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <h2>The 90 seconds you're rehearsing</h2>
+    <p>No slides. Sit down, hands on the desk, and start.</p>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Clock</th><th>Beat</th><th>What it proves</th></tr></thead>
+      <tbody>
+        <tr><td class="t">0:00–0:20</td><td>"Someone walks up to my desk." Finger to lips — audio mutes, screen blanks.</td><td>The hook. Everyone has had this exact moment.</td></tr>
+        <tr><td class="t">0:20–0:40</td><td>Thumbs up — playlist opens, the LED on the desk pulses to the beat.</td><td>It reaches into the physical world.</td></tr>
+        <tr><td class="t">0:40–1:10</td><td>Move the cursor by hand. Pinch to click something real.</td><td>The headline claim, unfaked.</td></tr>
+        <tr><td class="t">1:10–1:30</td><td>One line: gaze warps, hand refines — MAGIC pointing, Zhai 1999.</td><td>You know why you built it this way.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer>github.com/Nicohlutta/handsfree-hci · full written plan in PLAN.md · freeze 18:15</footer>
+
+</div>
