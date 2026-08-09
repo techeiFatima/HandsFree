@@ -53,15 +53,27 @@ folder, keys and all.
 
 From a clone of `techeiFatima/HandsFree`, with `main` up to date:
 
+**His trunk is `master`, not `main`.** Check before assuming — `git ls-remote`
+lists his branches without cloning anything.
+
 ```bash
 git remote add upstream https://github.com/Nicohlutta/handsfree-hci
 git fetch upstream
-git checkout -b track-b main
-git push upstream track-b
+git merge-base upstream/master main
 ```
 
-Then open a pull request on his repo from `track-b`, so he can look over the
-`safety.py` change before it lands on his trunk.
+That third command is the one that matters. If it prints a commit hash, the two
+repos share an ancestor and a pull request will merge cleanly. If it prints
+nothing, they do not, and you must sort that out with Nicholas before pushing
+anything — see the warning below.
+
+```bash
+git checkout -b track-b-actions main
+git push upstream track-b-actions
+```
+
+Then open a pull request on his repo, from `track-b-actions` into `master`, so
+he can look over the `safety.py` change before it lands on his trunk.
 
 Push a **branch**, not straight to his `main`. If his repo grew from a separate
 starting point, its history and this one may not share an ancestor, and pushing
@@ -105,8 +117,8 @@ git fetch origin
 
 ```bash
 git checkout main
-git branch -u origin/main main
-git pull --rebase origin main
+git branch -u origin/master main
+git pull --rebase origin master
 ```
 
 **4. Confirm.** `origin` should be his repo, and the log should show his commits
@@ -121,6 +133,20 @@ If step 3 stops with `refusing to merge unrelated histories`, the two repos grew
 from different starting points. Do **not** pass `--allow-unrelated-histories` to
 get past it — work out with Nicholas which trunk is real first, because forcing
 it merges two parallel versions of the same project into one tree.
+
+### If you pushed a branch from the wrong repository
+
+It happens, and `git ls-remote` is how you catch it: compare the hash of each
+branch against what you expect. A branch whose hash matches some unrelated
+project is a branch built from the wrong clone. Delete it from his repo and
+push a fresh one from the right clone:
+
+```bash
+git push upstream --delete track-b
+```
+
+Tell the other person you did it. It is their repo, and a branch appearing and
+vanishing without explanation is worse than the mistake itself.
 
 Should anything go wrong, nothing is lost: `git remote -v` still lists `myfork`,
 and `git reflog` still has where you were. To back all the way out,
