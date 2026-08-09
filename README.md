@@ -68,13 +68,62 @@ sundai/models.py                  passthrough | threshold | clap | chronos
 sundai/pipeline.py                the spine: window, rule, recorder, sinks
 sundai/server.py + ui.html        live dashboard
 handsfree/safety.py               kill switch (Ctrl+Alt+Q) + dead-man switch
-handsfree/actions/                word → action registry (python -m handsfree --fire <word>)
+handsfree/ui.py                   the one Tk thread every window runs on
+handsfree/actions/                word → action registry + the --fire CLI
 handsfree/beats.py                pre-analysed beat times → screen dot + Arduino LED
 handsfree/breakwatch.py           stillness tracker + break prompt
 media/beat_track.wav              demo song (regenerate: python -m handsfree.make_demo_track)
+tests/test_bench.py               the Track B pass numbers from bench-plan.html
 firmware/arduino_stream/*.ino     Uno Rev3 / Nano 33 IoT / Uno Q sensor streamer
 firmware/circuitpython/code.py    PyKit Ruler streamer
 logs/                             every run auto-recorded as .jsonl
+```
+
+## Hands-free HCI (the 9 Aug demo)
+
+The camera turns your gesture into a **word**; the word turns into something
+happening on the laptop. The two halves only meet at that string, so neither
+side blocks the other — and the machine side is testable with no webcam at all:
+
+```bash
+python -m handsfree.actions --list                 # every word
+python -m handsfree.actions --fire test_ping       # prove the seam
+python -m handsfree.actions --fire mute_toggle --repeat 5 --interval 1
+python -m handsfree.actions --fire privacy_blank --hold 10   # Esc dismisses
+python -m handsfree.beats --port COM4 --seconds 20            # LED on the beat
+```
+
+The eight contracted words, fixed and never renamed:
+
+| Word | Does |
+|---|---|
+| `mute_toggle` | OS volume mute + Alt+A so Zoom's mic mutes too |
+| `media_playpause` | media play/pause key |
+| `privacy_blank` / `privacy_restore` | black fullscreen cover on every monitor; **Esc dismisses** |
+| `playlist_open` | plays `media/beat_track.wav` |
+| `led_beat_start` / `led_beat_stop` | pulses a screen dot and the Arduino LED on the beat |
+| `break_prompt` | "you haven't moved" reminder |
+
+Two rules that everything else depends on:
+
+- **`Ctrl+Alt+Q` kills the process from anywhere.** Once the app is driving the
+  mouse, this is how you take the machine back. Learn it before running anything.
+- **No action ever blocks its caller.** Windows live on one shared Tk thread
+  (`handsfree/ui.py`), so firing a word never stalls the gesture loop.
+
+Beat times are extracted offline with librosa and cached; there is no live audio
+capture anywhere, because that path is fiddly on Windows and can fail on stage.
+Missing hardware degrades instead of failing — no Arduino falls back to the
+screen dot, no display falls back to console pulses.
+
+### Bench tests
+
+`bench-plan.html` says a feature without a passing bench test is not built.
+Track B's numbers are encoded as tests and run headless — no camera, board,
+display or Zoom:
+
+```bash
+python -m pytest tests/ -v      # -s also prints what still needs a human
 ```
 
 ## Adding a model

@@ -125,6 +125,28 @@ def test_media_playpause_sends_the_media_key(monkeypatch):
     assert sent == [("playpause",)]
 
 
+def test_key_names_are_real_pyautogui_keys(monkeypatch):
+    """A typo here is a silent no-op on stage — nothing raises, nothing mutes.
+
+    Verified against pyautogui 0.9.54's KEY_NAMES table when it's installed;
+    otherwise checked against the names confirmed present in that table.
+    """
+    import handsfree.actions.keys as keys
+    used = set()
+    monkeypatch.setattr(keys, "_press", lambda *k: used.update(k))
+    keys.mute_toggle()
+    keys.media_playpause()
+
+    try:
+        import pyautogui
+        valid = set(pyautogui.KEY_NAMES)
+    except Exception:
+        valid = {"volumemute", "volumeup", "volumedown", "playpause",
+                 "nexttrack", "prevtrack", "alt", "a", "esc"}
+    bad = used - valid
+    assert not bad, f"not real pyautogui key names: {bad}"
+
+
 def test_mute_still_sends_os_key_when_zoom_shortcut_fails(monkeypatch):
     """Alt+A failing must not swallow the OS mute — degrade, don't die."""
     import handsfree.actions.keys as keys
