@@ -11,16 +11,6 @@ also what every plan doc already says. `techeiFatima/HandsFree` is where Track B
 was built and currently holds the newer code; it becomes a working copy once the
 move below is done.
 
-### Step 1 — Nicholas invites Fatima
-
-> `Nicohlutta/handsfree-hci` → **Settings** → **Collaborators and teams** →
-> **Add people** → invite `techeiFatima` → she accepts from her GitHub
-> notifications or email.
-
-Until that invite is accepted, Fatima can read but **cannot push**, and no amount
-of committing gets her work to him. This is the actual blocker; nothing else in
-this file works without it.
-
 ### Step 0 — check you are in the right repository
 
 Git commands run against whatever repo contains your current directory, and it
@@ -49,6 +39,16 @@ If your home directory really is a git repo for something else, it is worth
 untangling separately — `git add -A` run there would stage your entire home
 folder, keys and all.
 
+### Step 1 — Nicholas invites Fatima
+
+> `Nicohlutta/handsfree-hci` → **Settings** → **Collaborators and teams** →
+> **Add people** → invite `techeiFatima` → she accepts from her GitHub
+> notifications or email.
+
+Until that invite is accepted, Fatima can read but **cannot push**, and no amount
+of committing gets her work to him. This is the actual blocker; nothing else in
+this file works without it.
+
 ### Step 2 — Fatima pushes Track B over to his repo
 
 From a clone of `techeiFatima/HandsFree`, with `main` up to date:
@@ -75,9 +75,9 @@ git push upstream track-b-actions
 Then open a pull request on his repo, from `track-b-actions` into `master`, so
 he can look over the `safety.py` change before it lands on his trunk.
 
-Push a **branch**, not straight to his `main`. If his repo grew from a separate
+Push a **branch**, not straight to his `master`. If his repo grew from a separate
 starting point, its history and this one may not share an ancestor, and pushing
-`main` directly would either be rejected or clobber his work. A branch plus a PR
+over `master` would either be rejected or clobber his work. A branch plus a PR
 shows you which it is before anything is at risk. If GitHub says the branches
 have unrelated histories, stop and sort that out together rather than forcing it.
 
@@ -113,7 +113,7 @@ git remote add origin https://github.com/Nicohlutta/handsfree-hci
 git fetch origin
 ```
 
-**3. Point `main` at his `main` and take his work.**
+**3. Point your `main` at his `master` and take his work.**
 
 ```bash
 git checkout main
@@ -157,14 +157,19 @@ and `git reflog` still has where you were. To back all the way out,
 The plan says no branches: commit to the trunk often and push. That only works
 if you **pull before you push**, every time.
 
-Take their work first, do your bit, run the tests, then commit and push:
+Take their work first, do your bit, run the tests, then commit and push. The
+shared trunk is `master` — that is his repo's default branch, and after Step 3
+`origin` means his repo:
 
 ```bash
-git pull --rebase origin main
+git pull --rebase origin master
 git add -A
 git commit -m "what changed and why"
-git push origin main
+git push origin master
 ```
+
+Before Step 3 is done, `origin` is still your own repo and its trunk is `main`;
+substitute accordingly rather than pasting blindly.
 
 `--rebase` keeps the history a straight line instead of littering it with merge
 commits every twenty minutes. If a push is rejected, someone pushed while you

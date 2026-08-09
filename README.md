@@ -22,24 +22,42 @@ board (dumb)                laptop (smart)
 
 ## Quickstart
 
+Activate the venv first, so `python` means the project's interpreter —
+`.venv\Scripts\activate` on Windows, `source .venv/bin/activate` on macOS and
+Linux.
+
+No hardware needed; synthetic sensors plus the UI prove the whole chain:
+
 ```bash
-# no hardware needed — synthetic sensors + UI, proves the whole chain
-.venv/Scripts/python run.py
+python run.py
+```
 
-# what hardware can I see?
-.venv/Scripts/python run.py --list
+What hardware can I see:
 
-# zero-shot audio events (CLAP). You write the classes in plain English.
-.venv/Scripts/python run.py --source audio --model clap \
+```bash
+python run.py --list
+```
+
+Zero-shot audio events (CLAP) — you write the classes in plain English:
+
+```bash
+python run.py --source audio --model clap \
   --labels "a kettle boiling,glass breaking,a vacuum cleaner,a person talking,silence" \
   --when "glass breaking" --action ALERT
+```
 
-# real board + time-series forecasting
-.venv/Scripts/python run.py --source serial --port COM3 --model chronos \
+Real board plus time-series forecasting. The port is `COM3`-style on Windows and
+`/dev/cu.usbmodem…` on macOS:
+
+```bash
+python run.py --source serial --port COM3 --model chronos \
   --channel soil --low 480 --when will-cross --action PUMP_ON
+```
 
-# demo insurance: replay a recorded run through the identical pipeline
-.venv/Scripts/python run.py --source replay --file logs/run-XXXX.jsonl --model clap --labels "..."
+Demo insurance — replay a recorded run through the identical pipeline:
+
+```bash
+python run.py --source replay --file logs/run-XXXX.jsonl --model clap --labels "..."
 ```
 
 UI at http://127.0.0.1:8000 — giant label, class-score bars, live plot with
@@ -86,12 +104,15 @@ happening on the laptop. The two halves only meet at that string, so neither
 side blocks the other — and the machine side is testable with no webcam at all:
 
 ```bash
-python -m handsfree.actions --list                 # every word
-python -m handsfree.actions --fire test_ping       # prove the seam
+python -m handsfree.actions --list
+python -m handsfree.actions --fire test_ping
 python -m handsfree.actions --fire mute_toggle --repeat 5 --interval 1
-python -m handsfree.actions --fire privacy_blank --hold 10   # Esc dismisses
-python -m handsfree.beats --seconds 20                        # LED on the beat
+python -m handsfree.actions --fire privacy_blank --hold 10
+python -m handsfree.beats --seconds 20
 ```
+
+`--list` names every word, `test_ping` proves the seam, `--hold` keeps a window
+up (Esc dismisses the blank), and `handsfree.beats` runs the LED and screen dot.
 
 The eight contracted words, fixed and never renamed:
 
@@ -148,13 +169,25 @@ git clone https://github.com/techeiFatima/HandsFree && cd HandsFree
 uv venv --python 3.11 .venv
 ```
 
-```bash
-# Windows
-uv pip install --python .venv/Scripts/python.exe -r requirements.txt
-.venv/Scripts/python -m handsfree.selftest
+**Just testing the hands-free demo?** `requirements.txt` also pins torch and
+transformers for the sensor spine, which is a slow download you do not need.
+These six are the whole of Track B:
 
-# macOS / Linux
+```bash
+uv pip install --python .venv/bin/python pyautogui pynput librosa soundfile pyserial screeninfo
+```
+
+On Windows use `--python .venv/Scripts/python.exe` instead. For the full repo,
+including the CLAP and Chronos models:
+
+```bash
 uv pip install --python .venv/bin/python -r requirements.txt
+```
+
+Then run it — `.venv/bin/python` on macOS and Linux,
+`.venv/Scripts/python` on Windows:
+
+```bash
 .venv/bin/python -m handsfree.selftest
 ```
 
@@ -193,8 +226,10 @@ Track B's numbers are encoded as tests and run headless — no camera, board,
 display or Zoom:
 
 ```bash
-python -m pytest tests/ -v      # -s also prints what still needs a human
+python -m pytest tests/ -v
 ```
+
+Add `-s` and it also prints the checks that still need a human or hardware.
 
 ## Adding a model
 
@@ -213,4 +248,10 @@ rather than dying.
 - [ ] Submit the card at `sundai.club/pitch` well before 8pm.
 
 ## Team
-- Nicholas Lutta
+
+- **Nicholas Lutta** — perception: webcam, hand landmarks, gestures, cursor
+- **Fatima Danishyar** — actuation: the action registry, beats, break reminder
+
+Working on this together? Read [COLLABORATING.md](COLLABORATING.md) first — it
+covers which repo is the trunk, the pull-before-push loop, and who owns which
+files.

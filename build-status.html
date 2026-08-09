@@ -127,7 +127,7 @@
     <div class="tile good"><span class="k">Words wired</span><span class="v">8 / 8</span><span class="s">registry asserts at import</span></div>
     <div class="tile good"><span class="k">Bench tests</span><span class="v">43</span><span class="s">green, all headless</span></div>
     <div class="tile good"><span class="k">Beat timing</span><span class="v">0.4 ms</span><span class="s">typical, and never accumulates</span></div>
-    <div class="tile hold"><span class="k">Needs a human</span><span class="v">4</span><span class="s">phone, display, board</span></div>
+    <div class="tile hold"><span class="k">Needs a human</span><span class="v">5</span><span class="s">phone, display, board, git</span></div>
   </div>
 </section>
 
@@ -363,7 +363,11 @@
         System Settings → Privacy &amp; Security, then quit and reopen it. Neither library
         raises without them — they just quietly do nothing, which looks exactly like a bug
         in this code.</li>
-      <li><b>Accept the GitHub invite</b> before trying to push.</li>
+      <li><b>Finish moving Track B into Nicholas's repo.</b> His trunk is
+        <code>master</code>, and a stray <code>track-b</code> branch there currently holds a
+        commit from an unrelated project — delete it, push the real branch from a clone of
+        this repo, and open the pull request so he can review the <code>safety.py</code>
+        change. Steps are in <code>COLLABORATING.md</code>.</li>
     </ul>
   </div>
 </section>
