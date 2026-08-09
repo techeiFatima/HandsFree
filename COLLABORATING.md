@@ -51,23 +51,42 @@ reachable as a fallback, and `pull --rebase` replays any local commits you had
 not pushed yet on top of his history. `git reset --hard origin/main` deletes
 them without asking — tested, and it really does lose the work.
 
-```bash
-# 1. look before you leap
-git status                       # commit or stash anything listed
-git log --oneline origin/main..main   # anything here is NOT yet pushed
+> **Paste these without the surrounding prose.** Interactive zsh — the default
+> shell on macOS — does not treat `#` as a comment, so a trailing
+> `# like this` is handed to git as an argument and you get
+> `fatal: ambiguous argument '#'`. Nothing is harmed, but the command does not
+> run. Every block below is therefore comment-free and safe to paste whole.
 
-# 2. origin becomes his; your old repo survives as "myfork"
+**1. Look before you leap.** Commit or stash anything the first command lists;
+anything the second lists is committed but not yet pushed.
+
+```bash
+git status
+git log --oneline origin/main..main
+```
+
+**2. Make `origin` mean his repo.** Your own repo survives as `myfork`.
+
+```bash
 git remote rename origin myfork
 git remote add origin https://github.com/Nicohlutta/handsfree-hci
 git fetch origin
+```
 
-# 3. point main at his main and take his work
+**3. Point `main` at his `main` and take his work.**
+
+```bash
+git checkout main
 git branch -u origin/main main
 git pull --rebase origin main
+```
 
-# 4. confirm
-git remote -v                    # origin -> Nicohlutta/handsfree-hci
-git log --oneline -5             # his commits and yours, one line
+**4. Confirm.** `origin` should be his repo, and the log should show his commits
+and yours in one straight line.
+
+```bash
+git remote -v
+git log --oneline -5
 ```
 
 If step 3 stops with `refusing to merge unrelated histories`, the two repos grew
@@ -84,10 +103,12 @@ and `git reflog` still has where you were. To back all the way out,
 The plan says no branches: commit to the trunk often and push. That only works
 if you **pull before you push**, every time.
 
+Take their work first, do your bit, run the tests, then commit and push:
+
 ```bash
-git pull --rebase origin main     # take their work first
-# ... do your bit, run the tests ...
-git add -A && git commit -m "what changed and why"
+git pull --rebase origin main
+git add -A
+git commit -m "what changed and why"
 git push origin main
 ```
 
@@ -127,12 +148,16 @@ playlist_open  led_beat_start  led_beat_stop  break_prompt
 
 Neither side needs the other to be finished:
 
-```bash
-# Fatima, with no camera:
-python -m handsfree.actions --fire mute_toggle
+Fatima, with no camera:
 
-# Nicholas, with no actions: print the word instead of firing it,
-# then swap in the real call when you're ready.
+```bash
+python -m handsfree.actions --fire mute_toggle
+```
+
+Nicholas, with no actions built yet — print the word instead of firing it, then
+swap in the real call when you're ready:
+
+```python
 from handsfree.actions import fire
 fire(word)
 ```
@@ -142,8 +167,10 @@ only then touch code. A renamed string is a gesture that silently fires nothing.
 
 ## Before you push
 
+43 tests; no camera, board or display needed:
+
 ```bash
-python -m pytest tests/ -q        # 43 tests, no camera/board/display needed
+python -m pytest tests/ -q
 ```
 
 A red test on the trunk blocks both of you, so run them before pushing, not
