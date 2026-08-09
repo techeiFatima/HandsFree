@@ -116,6 +116,19 @@ capture anywhere, because that path is fiddly on Windows and can fail on stage.
 Missing hardware degrades instead of failing — no Arduino falls back to the
 screen dot, no display falls back to console pulses.
 
+### What works today, and what doesn't
+
+**The camera half does not exist yet.** Track A — `sources.py`, `gestures.py`,
+`cursor.py`, the hand tracking and the pinch-click — is Nicholas's, and none of
+those files are in this repo. So you cannot currently wave at the laptop and
+watch it mute.
+
+What you *can* run end to end is everything downstream of the word: fire
+`mute_toggle` and the mic really mutes, fire `privacy_blank` and the screen
+really goes black. That is the entire point of splitting at the string — Track B
+is finished and benched while Track A is still being built, and on the day the
+two are joined nothing here has to change.
+
 ### Testing it for real
 
 There is no website to try this on, and there can't be — the product moves the
@@ -125,8 +138,15 @@ loop is Python and not the browser — see `PLAN.md` §1). You test it by runnin
 
 Runs on **Windows and macOS** (and Linux, for the non-GUI parts).
 
+> **Where the code is.** The plan docs point at `Nicohlutta/handsfree-hci`, but
+> this checkout's origin is `techeiFatima/HandsFree`, and Track B currently
+> lives on the branch `claude/website-overview-wad0j1`, not on `main`. Clone
+> *this* repo and check that branch out, or you will get a tree with no
+> `handsfree/actions/` in it.
+
 ```bash
-git clone https://github.com/Nicohlutta/handsfree-hci && cd handsfree-hci
+git clone https://github.com/techeiFatima/HandsFree && cd HandsFree
+git checkout claude/website-overview-wad0j1
 uv venv --python 3.11 .venv
 ```
 
