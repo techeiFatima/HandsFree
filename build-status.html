@@ -116,7 +116,7 @@
 <header>
   <p class="eyebrow">Hands-free HCI · Sundai · 9 Aug 2026</p>
   <h1>Track B is wired end to end.</h1>
-  <p>Every action word Nicholas's camera can emit now does something on the laptop,
+  <p>Every action word Nicholas's camera can emit now does something on the laptop — on Windows and macOS alike,
   and each one has a bench test with a number behind it. Below is what was measured,
   what it was measured against, and the four things that still need a human.</p>
 </header>
@@ -125,7 +125,7 @@
   <h2>At a glance</h2>
   <div class="tiles">
     <div class="tile good"><span class="k">Words wired</span><span class="v">8 / 8</span><span class="s">registry asserts at import</span></div>
-    <div class="tile good"><span class="k">Bench tests</span><span class="v">30</span><span class="s">green 12 runs straight</span></div>
+    <div class="tile good"><span class="k">Bench tests</span><span class="v">43</span><span class="s">green, all headless</span></div>
     <div class="tile good"><span class="k">Beat timing</span><span class="v">0.4 ms</span><span class="s">typical, and never accumulates</span></div>
     <div class="tile hold"><span class="k">Needs a human</span><span class="v">4</span><span class="s">phone, display, board</span></div>
   </div>
@@ -289,6 +289,38 @@
 </section>
 
 <section>
+  <h2>Runs on Windows and macOS</h2>
+  <div class="fixes">
+    <div class="fix">
+      <div class="ft">The kill switch did not exist on a Mac</div>
+      <div class="fb">It matched raw key codes, and those are not portable: <code>q</code> is
+      81 on Windows, <b>12 on macOS</b>, 113 under X11. So <code>Ctrl+Alt+Q</code> could never
+      fire on a Mac — and failed <b>silently</b>, which is worse than not running there at all,
+      because you would trust it. Modifiers now match pynput's <code>Key</code> members, which
+      are identical on every platform; only the letter needs a per-OS table. Reverting that
+      table to the old hardcoded 81 makes the test fail, so it catches the real bug rather
+      than just passing.</div>
+    </div>
+    <div class="fix">
+      <div class="ft">Play/pause silently did nothing on macOS</div>
+      <div class="fb"><code>playpause</code> isn't in pyautogui's macOS key table at all, and
+      its <code>_keyDown</code> just returns for a key it doesn't know — no exception. So the
+      action reported success in 0 ms having sent nothing. Both media keys now go out as
+      NSSystemDefined events through pyautogui's own <code>_specialKeyEvent</code>.</div>
+    </div>
+    <div class="fix">
+      <div class="ft">Zoom, screens and serial ports all differ</div>
+      <div class="fb">Zoom's global mute is <b>Cmd+Shift+A</b> on macOS, not Alt+A. Native
+      <code>-fullscreen</code> there animates for half a second and moves the blank into its
+      own Space, missing the "covers in under a second" bar. And the board is
+      <code>/dev/cu.usbmodem…</code>, not <code>COM4</code> — now auto-detected. One caveat
+      that is macOS's, not ours: Accessibility <i>and</i> Input Monitoring must both be
+      granted, and neither library complains when they aren't.</div>
+    </div>
+  </div>
+</section>
+
+<section>
   <h2>Three defects found and fixed</h2>
   <div class="fixes">
     <div class="fix">
@@ -327,6 +359,10 @@
         <code>mute_toggle</code> five times each way, watch the indicator.</li>
       <li><b>Confirm a board and an LED are on the table.</b> If not, the LED half drops and
         the screen dot carries it — that path is already tested.</li>
+      <li><b>On a Mac, grant Accessibility and Input Monitoring</b> to your terminal in
+        System Settings → Privacy &amp; Security, then quit and reopen it. Neither library
+        raises without them — they just quietly do nothing, which looks exactly like a bug
+        in this code.</li>
       <li><b>Accept the GitHub invite</b> before trying to push.</li>
     </ul>
   </div>
@@ -343,6 +379,6 @@
   </div>
 </section>
 
-<footer>freeze 18:15 · demo 20:00 · 30 tests green</footer>
+<footer>freeze 18:15 · demo 20:00 · 43 tests green · windows + macos</footer>
 
 </div>
